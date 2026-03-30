@@ -1,20 +1,35 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import './src/global.css'
+
+import React from 'react'
+import { View } from 'react-native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as SystemUI from 'expo-system-ui'
+
+import { AuthProvider } from './src/contexts/AuthContext'
+import { AppNavigator } from './src/navigation'
+
+SystemUI.setBackgroundColorAsync('#0A0A0F')
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+})
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+          <AuthProvider>
+            <AppNavigator />
+          </AuthProvider>
+        </View>
+      </QueryClientProvider>
+    </SafeAreaProvider>
+  )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
