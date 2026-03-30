@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.streams.app"
+      "bundleIdentifier": "com.waveplay.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,10 +22,15 @@
         "backgroundColor": "#0A0A0F"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.streams.app"
+      "package": "com.waveplay.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d41b6a11-3890-4db1-bb72-dd5263ff15fb"
+      }
     }
   }
 }
