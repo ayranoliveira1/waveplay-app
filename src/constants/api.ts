@@ -1,8 +1,8 @@
-export const TMDB_ACCESS_TOKEN = process.env.EXPO_PUBLIC_TMDB_ACCESS_TOKEN ?? ''
-export const TMDB_BASE_URL = process.env.EXPO_PUBLIC_TMDB_BASE_URL ?? 'https://api.themoviedb.org/3'
-export const TMDB_IMAGE_BASE = process.env.EXPO_PUBLIC_TMDB_IMAGE_BASE ?? 'https://image.tmdb.org/t/p'
+export const TMDB_ACCESS_TOKEN = process.env.EXPO_PUBLIC_TMDB_ACCESS_TOKEN!
+export const TMDB_BASE_URL = process.env.EXPO_PUBLIC_TMDB_BASE_URL!
+export const TMDB_IMAGE_BASE = process.env.EXPO_PUBLIC_TMDB_IMAGE_BASE!
 
-export const EMBED_PLAY_BASE_URL = process.env.EXPO_PUBLIC_EMBED_PLAY_BASE_URL ?? 'https://embedplayapi.site'
+export const EMBED_PLAY_BASE_URL = process.env.EXPO_PUBLIC_EMBED_PLAY_BASE_URL!
 
 export const TMDB_IMAGE_SIZES = {
   poster: {
