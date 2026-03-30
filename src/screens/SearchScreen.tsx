@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { EmptyState } from '../components/ui'
+import { EmptyState, ErrorState } from '../components/ui'
 import { searchMulti } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import type { RootStackParamList, TMDBMultiSearchResult } from '../types'
@@ -35,7 +35,7 @@ export function SearchScreen() {
     }, 500)
   }, [])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['search', debouncedQuery],
     queryFn: () => searchMulti(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
@@ -118,7 +118,9 @@ export function SearchScreen() {
         </View>
       </View>
 
-      {isLoading && debouncedQuery.length >= 2 ? (
+      {isError && debouncedQuery.length >= 2 ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : isLoading && debouncedQuery.length >= 2 ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#7B2FBE" />
         </View>

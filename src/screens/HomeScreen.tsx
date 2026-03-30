@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { AnimatedSection, HeroBanner, MediaCard, Carousel, ContinueWatchingCard } from '../components'
+import { ErrorState } from '../components/ui'
 import {
   getTrendingAll,
   getPopularMovies,
@@ -31,7 +32,7 @@ export function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const { data: trending, isLoading: trendingLoading, refetch: refetchTrending } = useQuery({
+  const { data: trending, isLoading: trendingLoading, isError: trendingError, refetch: refetchTrending } = useQuery({
     queryKey: ['trending', 'all'],
     queryFn: () => getTrendingAll(),
   })
@@ -78,6 +79,14 @@ export function HomeScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#7B2FBE" />
+      </View>
+    )
+  }
+
+  if (trendingError) {
+    return (
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <ErrorState onRetry={() => refetchTrending()} />
       </View>
     )
   }

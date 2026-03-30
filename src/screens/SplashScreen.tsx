@@ -7,8 +7,8 @@ interface SplashScreenProps {
 }
 
 const LETTERS = 'WAVEPLAY'.split('')
-const LETTER_DELAY = 250
-const HOLD_DURATION = 2000
+const LETTER_DELAY = 200
+const HOLD_DURATION = 1300
 
 export function SplashScreen({ onFinish }: SplashScreenProps) {
   const letterAnims = useRef(LETTERS.map(() => new Animated.Value(0))).current

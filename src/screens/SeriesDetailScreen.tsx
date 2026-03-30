@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
-import { Button } from '../components/ui'
+import { Button, ErrorState } from '../components/ui'
 import { SeasonPicker, EpisodeCard, BackButton } from '../components'
 import { getSeriesDetail, getSeasonDetail } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
@@ -34,7 +34,7 @@ export function SeriesDetailScreen() {
 
   const seriesProgress = getAllProgressForSeries(id)
 
-  const { data: series, isLoading } = useQuery({
+  const { data: series, isLoading, isError, refetch } = useQuery({
     queryKey: ['series', id],
     queryFn: () => getSeriesDetail(id),
   })
@@ -45,10 +45,21 @@ export function SeriesDetailScreen() {
     enabled: !!series,
   })
 
-  if (isLoading || !series) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#7B2FBE" />
+      </View>
+    )
+  }
+
+  if (isError || !series) {
+    return (
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <View className="px-4 pt-2">
+          <BackButton variant="inline" />
+        </View>
+        <ErrorState onRetry={() => refetch()} />
       </View>
     )
   }

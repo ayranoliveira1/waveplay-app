@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
-import { Button } from '../components/ui'
+import { Button, ErrorState } from '../components/ui'
 import { MediaCard, Carousel, BackButton } from '../components'
 import { getMovieDetail, getSimilarMovies } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
@@ -31,7 +31,7 @@ export function MovieDetailScreen() {
     }, [reloadProgress]),
   )
 
-  const { data: movie, isLoading } = useQuery({
+  const { data: movie, isLoading, isError, refetch } = useQuery({
     queryKey: ['movie', id],
     queryFn: () => getMovieDetail(id),
   })
@@ -42,10 +42,21 @@ export function MovieDetailScreen() {
     enabled: !!movie,
   })
 
-  if (isLoading || !movie) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#7B2FBE" />
+      </View>
+    )
+  }
+
+  if (isError || !movie) {
+    return (
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <View className="px-4 pt-2">
+          <BackButton variant="inline" />
+        </View>
+        <ErrorState onRetry={() => refetch()} />
       </View>
     )
   }

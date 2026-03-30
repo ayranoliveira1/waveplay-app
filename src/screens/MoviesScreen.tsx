@@ -12,6 +12,7 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { GenreChips, RatingBadge } from '../components'
+import { ErrorState } from '../components/ui'
 import {
   getMovieGenres,
   getPopularMovies,
@@ -40,6 +41,8 @@ export function MoviesScreen() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isError,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ['movies', 'list', selectedGenreId],
     queryFn: ({ pageParam }) =>
@@ -108,7 +111,9 @@ export function MoviesScreen() {
         />
       )}
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#7B2FBE" />
         </View>
