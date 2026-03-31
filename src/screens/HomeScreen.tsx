@@ -11,6 +11,8 @@ import {
   getPopularMovies,
   getPopularSeries,
   getNowPlayingMovies,
+  getTopRatedMovies,
+  getUpcomingMovies,
 } from '../services/tmdb'
 import { useHistory } from '../hooks'
 import type { RootStackParamList, TMDBMovie, TMDBSeries, TMDBMultiSearchResult, HistoryItem } from '../types'
@@ -52,6 +54,16 @@ export function HomeScreen() {
     queryFn: () => getNowPlayingMovies(),
   })
 
+  const { data: topRated, refetch: refetchTopRated } = useQuery({
+    queryKey: ['movies', 'top_rated'],
+    queryFn: () => getTopRatedMovies(),
+  })
+
+  const { data: upcoming, refetch: refetchUpcoming } = useQuery({
+    queryKey: ['movies', 'upcoming'],
+    queryFn: () => getUpcomingMovies(),
+  })
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     await Promise.all([
@@ -59,11 +71,13 @@ export function HomeScreen() {
       refetchPopular(),
       refetchSeries(),
       refetchNowPlaying(),
+      refetchTopRated(),
+      refetchUpcoming(),
       reloadHistory(),
     ])
     setRefreshKey((k) => k + 1)
     setRefreshing(false)
-  }, [refetchTrending, refetchPopular, refetchSeries, refetchNowPlaying, reloadHistory])
+  }, [refetchTrending, refetchPopular, refetchSeries, refetchNowPlaying, refetchTopRated, refetchUpcoming, reloadHistory])
 
   function handleMediaPress(id: number, type: 'movie' | 'series') {
     if (type === 'movie') {
@@ -72,8 +86,6 @@ export function HomeScreen() {
       navigation.navigate('SeriesDetail', { id })
     }
   }
-
-  const heroItem = trending?.results[0]
 
   if (trendingLoading) {
     return (
@@ -105,22 +117,19 @@ export function HomeScreen() {
         />
       }
     >
-      {heroItem && (
+      {trending && (
         <AnimatedSection key={`hero-${refreshKey}`} delay={0}>
           <HeroBanner
-            id={heroItem.id}
-            type={heroItem.media_type === 'tv' ? 'series' : 'movie'}
-            title={heroItem.title || heroItem.name || ''}
-            overview={heroItem.overview}
-            backdropPath={heroItem.backdrop_path}
-            posterPath={heroItem.poster_path}
-            rating={heroItem.vote_average}
-            onPress={() =>
-              handleMediaPress(
-                heroItem.id,
-                heroItem.media_type === 'tv' ? 'series' : 'movie',
-              )
-            }
+            items={trending.results.slice(0, 5).map((item) => ({
+              id: item.id,
+              type: item.media_type === 'tv' ? 'series' as const : 'movie' as const,
+              title: item.title || item.name || '',
+              overview: item.overview,
+              backdropPath: item.backdrop_path,
+              posterPath: item.poster_path,
+              rating: item.vote_average,
+            }))}
+            onPressItem={handleMediaPress}
           />
         </AnimatedSection>
       )}
@@ -204,6 +213,46 @@ export function HomeScreen() {
             title="Em Cartaz"
             data={nowPlaying.results.slice(0, 15)}
             keyExtractor={(item: TMDBMovie) => `now-${item.id}`}
+            renderItem={(item: TMDBMovie) => (
+              <MediaCard
+                id={item.id}
+                title={item.title}
+                posterPath={item.poster_path}
+                rating={item.vote_average}
+                type="movie"
+                onPress={handleMediaPress}
+              />
+            )}
+          />
+        </AnimatedSection>
+      )}
+
+      {topRated && (
+        <AnimatedSection key={`toprated-${refreshKey}`} delay={600}>
+          <Carousel
+            title="Mais Bem Avaliados"
+            data={topRated.results.slice(0, 15)}
+            keyExtractor={(item: TMDBMovie) => `toprated-${item.id}`}
+            renderItem={(item: TMDBMovie) => (
+              <MediaCard
+                id={item.id}
+                title={item.title}
+                posterPath={item.poster_path}
+                rating={item.vote_average}
+                type="movie"
+                onPress={handleMediaPress}
+              />
+            )}
+          />
+        </AnimatedSection>
+      )}
+
+      {upcoming && (
+        <AnimatedSection key={`upcoming-${refreshKey}`} delay={700}>
+          <Carousel
+            title="Em Breve"
+            data={upcoming.results.slice(0, 15)}
+            keyExtractor={(item: TMDBMovie) => `upcoming-${item.id}`}
             renderItem={(item: TMDBMovie) => (
               <MediaCard
                 id={item.id}
