@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { NavigationContainer, DarkTheme } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { StatusBar } from 'expo-status-bar'
+import * as Updates from 'expo-updates'
 import { AuthNavigator } from './AuthNavigator'
 import { MainNavigator } from './MainNavigator'
 import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, FavoritesScreen, HistoryScreen } from '../screens'
+import { UpdateModal } from '../components/ui'
 import { useAuth } from '../hooks'
 import type { RootStackParamList } from '../types'
 
@@ -23,6 +25,38 @@ function LoadingScreen() {
 export function AppNavigator() {
   const { isAuthenticated, isLoading } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const { isDownloading, downloadProgress } = Updates.useUpdates()
+
+  const handleSplashFinish = useCallback(async () => {
+    try {
+      if (Updates.isEnabled) {
+        const check = await Updates.checkForUpdateAsync()
+        if (check.isAvailable) {
+          setShowUpdateModal(true)
+          return
+        }
+      }
+    } catch {
+      // em dev ou sem rede, ignora
+    }
+    setShowSplash(false)
+  }, [])
+
+  const handleUpdate = useCallback(async () => {
+    try {
+      await Updates.fetchUpdateAsync()
+      await Updates.reloadAsync()
+    } catch {
+      setShowUpdateModal(false)
+      setShowSplash(false)
+    }
+  }, [])
+
+  const handleSkipUpdate = useCallback(() => {
+    setShowUpdateModal(false)
+    setShowSplash(false)
+  }, [])
 
   const navigationTheme = useMemo(
     () => ({
@@ -41,7 +75,18 @@ export function AppNavigator() {
   )
 
   if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />
+    return (
+      <>
+        <SplashScreen onFinish={handleSplashFinish} />
+        <UpdateModal
+          visible={showUpdateModal}
+          downloading={isDownloading}
+          progress={downloadProgress ?? 0}
+          onUpdate={handleUpdate}
+          onSkip={handleSkipUpdate}
+        />
+      </>
+    )
   }
 
   if (isLoading) {
