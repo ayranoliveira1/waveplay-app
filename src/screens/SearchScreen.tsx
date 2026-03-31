@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { EmptyState, ErrorState } from '../components/ui'
+import { Chip, EmptyState, ErrorState } from '../components/ui'
+import { useSearchHistory } from '../hooks'
 import { searchMulti } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import type { RootStackParamList, TMDBMultiSearchResult } from '../types'
@@ -23,6 +24,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 export function SearchScreen() {
   const navigation = useNavigation<NavigationProp>()
   const insets = useSafeAreaInsets()
+  const { searchHistory, addSearch, removeSearch, clearSearchHistory } = useSearchHistory()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -40,6 +42,18 @@ export function SearchScreen() {
     queryFn: () => searchMulti(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
   })
+
+  React.useEffect(() => {
+    if (debouncedQuery.length >= 2 && data && data.results.length > 0) {
+      addSearch(debouncedQuery)
+    }
+  }, [debouncedQuery, data])
+
+  const handleChipPress = useCallback((term: string) => {
+    setQuery(term)
+    setDebouncedQuery(term)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   const results =
     data?.results.filter(
@@ -137,6 +151,25 @@ export function SearchScreen() {
           title="Nenhum resultado"
           message={`Não encontramos resultados para "${debouncedQuery}"`}
         />
+      ) : searchHistory.length > 0 ? (
+        <View className="px-4 pt-4">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-base font-semibold text-white">Buscas recentes</Text>
+            <Pressable onPress={clearSearchHistory}>
+              <Text className="text-sm text-accent">Limpar tudo</Text>
+            </Pressable>
+          </View>
+          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+            {searchHistory.map((term) => (
+              <Chip
+                key={term}
+                label={term}
+                onPress={() => handleChipPress(term)}
+                onRemove={() => removeSearch(term)}
+              />
+            ))}
+          </View>
+        </View>
       ) : (
         <EmptyState
           title="O que você quer assistir?"
