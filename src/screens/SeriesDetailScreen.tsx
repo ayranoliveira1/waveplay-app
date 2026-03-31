@@ -8,11 +8,11 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
 import { Button, ErrorState } from '../components/ui'
-import { SeasonPicker, EpisodeCard, BackButton } from '../components'
-import { getSeriesDetail, getSeasonDetail } from '../services/tmdb'
+import { SeasonPicker, EpisodeCard, BackButton, Carousel, MediaCard } from '../components'
+import { getSeriesDetail, getSeasonDetail, getSimilarSeries } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import { useFavorites, useProgress, formatTime } from '../hooks'
-import type { RootStackParamList, Episode } from '../types'
+import type { RootStackParamList, Episode, TMDBSeries } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 type SeriesDetailRoute = RouteProp<RootStackParamList, 'SeriesDetail'>
@@ -43,6 +43,11 @@ export function SeriesDetailScreen() {
     queryKey: ['series', id, 'season', selectedSeason],
     queryFn: () => getSeasonDetail(id, selectedSeason),
     enabled: !!series,
+  })
+
+  const { data: similar } = useQuery({
+    queryKey: ['series', id, 'similar'],
+    queryFn: () => getSimilarSeries(id),
   })
 
   if (isLoading) {
@@ -81,6 +86,14 @@ export function SeriesDetailScreen() {
         rating: series!.vote_average,
         type: 'series',
       })
+    }
+  }
+
+  function handleMediaPress(mediaId: number, type: 'movie' | 'series') {
+    if (type === 'movie') {
+      navigation.navigate('MovieDetail', { id: mediaId })
+    } else {
+      navigation.navigate('SeriesDetail', { id: mediaId })
     }
   }
 
@@ -270,6 +283,26 @@ export function SeriesDetailScreen() {
           ))}
         </View>
       </View>
+
+      {similar && similar.results.length > 0 && (
+        <View className="mt-6">
+          <Carousel
+            title="Séries Similares"
+            data={similar.results.slice(0, 15)}
+            keyExtractor={(item: TMDBSeries) => `similar-${item.id}`}
+            renderItem={(item: TMDBSeries) => (
+              <MediaCard
+                id={item.id}
+                title={item.name}
+                posterPath={item.poster_path}
+                rating={item.vote_average}
+                type="series"
+                onPress={handleMediaPress}
+              />
+            )}
+          />
+        </View>
+      )}
 
       <View style={{ height: insets.bottom + 16 }} />
     </ScrollView>
