@@ -91,6 +91,12 @@ export function SettingsScreen() {
         />
 
         <MenuItem
+          icon="bookmark-outline"
+          label="Assistir Depois"
+          onPress={() => navigation.navigate('Watchlist')}
+        />
+
+        <MenuItem
           icon="time-outline"
           label="Histórico"
           onPress={() => navigation.navigate('History')}
