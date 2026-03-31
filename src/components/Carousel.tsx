@@ -8,7 +8,7 @@ interface CarouselProps<T> {
   keyExtractor: (item: T) => string
 }
 
-export function Carousel<T>({
+export const Carousel = React.memo(function Carousel<T>({
   title,
   data,
   renderItem,
@@ -24,7 +24,10 @@ export function Carousel<T>({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
+        windowSize={3}
+        maxToRenderPerBatch={5}
+        removeClippedSubviews
       />
     </View>
   )
-}
+}) as <T>(props: CarouselProps<T>) => React.ReactElement

@@ -15,7 +15,7 @@ interface MediaCardProps {
   onPress: (id: number, type: 'movie' | 'series') => void
 }
 
-export function MediaCard({
+export const MediaCard = React.memo(function MediaCard({
   id,
   title,
   posterPath,
@@ -94,4 +94,4 @@ export function MediaCard({
       </Pressable>
     </Animated.View>
   )
-}
+})
