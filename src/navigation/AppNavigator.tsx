@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { NavigationContainer, DarkTheme } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import * as Updates from 'expo-updates'
 import { AuthNavigator } from './AuthNavigator'
@@ -24,23 +25,34 @@ function LoadingScreen() {
 
 export function AppNavigator() {
   const { isAuthenticated, isLoading } = useAuth()
+  const insets = useSafeAreaInsets()
   const [showSplash, setShowSplash] = useState(true)
+
+  // OTA update — roda desde o início, em paralelo com tudo
+  const [checkingUpdate, setCheckingUpdate] = useState(true)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const didCheckUpdate = useRef(false)
   const { isDownloading, downloadProgress } = Updates.useUpdates()
 
-  const handleSplashFinish = useCallback(async () => {
-    try {
-      if (Updates.isEnabled) {
-        const check = await Updates.checkForUpdateAsync()
-        if (check.isAvailable) {
-          setShowUpdateModal(true)
-          return
+  useEffect(() => {
+    if (didCheckUpdate.current) return
+    didCheckUpdate.current = true
+
+    ;(async () => {
+      try {
+        if (Updates.isEnabled) {
+          const check = await Updates.checkForUpdateAsync()
+          if (check.isAvailable) {
+            setCheckingUpdate(false)
+            setShowUpdateModal(true)
+            return
+          }
         }
+      } catch {
+        // em dev ou sem rede, ignora
       }
-    } catch {
-      // em dev ou sem rede, ignora
-    }
-    setShowSplash(false)
+      setCheckingUpdate(false)
+    })()
   }, [])
 
   const handleUpdate = useCallback(async () => {
@@ -49,12 +61,14 @@ export function AppNavigator() {
       await Updates.reloadAsync()
     } catch {
       setShowUpdateModal(false)
-      setShowSplash(false)
     }
   }, [])
 
   const handleSkipUpdate = useCallback(() => {
     setShowUpdateModal(false)
+  }, [])
+
+  const handleSplashFinish = useCallback(() => {
     setShowSplash(false)
   }, [])
 
@@ -74,50 +88,70 @@ export function AppNavigator() {
     [],
   )
 
-  if (showSplash) {
-    return (
-      <>
-        <SplashScreen onFinish={handleSplashFinish} />
-        <UpdateModal
-          visible={showUpdateModal}
-          downloading={isDownloading}
-          progress={downloadProgress ?? 0}
-          onUpdate={handleUpdate}
-          onSkip={handleSkipUpdate}
-        />
-      </>
-    )
-  }
-
-  if (isLoading) {
-    return <LoadingScreen />
-  }
-
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <StatusBar style="light" />
-      {isAuthenticated ? (
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#0A0A0F' },
-            animation: 'slide_from_right',
+    <View style={{ flex: 1 }}>
+      {checkingUpdate && (
+        <View
+          style={{
+            position: 'absolute',
+            top: insets.top + 8,
+            right: 16,
+            zIndex: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(20,20,31,0.9)',
+            borderRadius: 20,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            gap: 6,
           }}
         >
-          <Stack.Screen name="Main" component={MainNavigator} />
-          <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
-          <Stack.Screen name="SeriesDetail" component={SeriesDetailScreen} />
-          <Stack.Screen name="Favorites" component={FavoritesScreen} />
-          <Stack.Screen name="History" component={HistoryScreen} />
-          <Stack.Screen
-            name="Player"
-            component={PlayerScreen}
-            options={{ orientation: 'all' }}
-          />
-        </Stack.Navigator>
-      ) : (
-        <AuthNavigator />
+          <ActivityIndicator size="small" color="#7B2FBE" />
+          <Text style={{ color: '#7B2FBE', fontSize: 12 }}>
+            Verificando atualização...
+          </Text>
+        </View>
       )}
-    </NavigationContainer>
+
+      {showSplash ? (
+        <SplashScreen onFinish={handleSplashFinish} />
+      ) : isLoading ? (
+        <LoadingScreen />
+      ) : (
+        <NavigationContainer theme={navigationTheme}>
+          <StatusBar style="light" />
+          {isAuthenticated ? (
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#0A0A0F' },
+                animation: 'slide_from_right',
+              }}
+            >
+              <Stack.Screen name="Main" component={MainNavigator} />
+              <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
+              <Stack.Screen name="SeriesDetail" component={SeriesDetailScreen} />
+              <Stack.Screen name="Favorites" component={FavoritesScreen} />
+              <Stack.Screen name="History" component={HistoryScreen} />
+              <Stack.Screen
+                name="Player"
+                component={PlayerScreen}
+                options={{ orientation: 'all' }}
+              />
+            </Stack.Navigator>
+          ) : (
+            <AuthNavigator />
+          )}
+        </NavigationContainer>
+      )}
+
+      <UpdateModal
+        visible={showUpdateModal}
+        downloading={isDownloading}
+        progress={downloadProgress ?? 0}
+        onUpdate={handleUpdate}
+        onSkip={handleSkipUpdate}
+      />
+    </View>
   )
 }
