@@ -14,6 +14,7 @@ export type RootStackParamList = {
   }
   Favorites: undefined
   History: undefined
+  Watchlist: undefined
 }
 
 export type AuthStackParamList = {

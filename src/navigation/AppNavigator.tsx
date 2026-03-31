@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar'
 import * as Updates from 'expo-updates'
 import { AuthNavigator } from './AuthNavigator'
 import { MainNavigator } from './MainNavigator'
-import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, FavoritesScreen, HistoryScreen } from '../screens'
+import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, FavoritesScreen, HistoryScreen, WatchlistScreen } from '../screens'
 import { UpdateModal } from '../components/ui'
 import { useAuth } from '../hooks'
 import type { RootStackParamList } from '../types'
@@ -41,7 +41,13 @@ export function AppNavigator() {
     ;(async () => {
       try {
         if (Updates.isEnabled) {
-          const check = await Updates.checkForUpdateAsync()
+          const timeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 10000),
+          )
+          const check = await Promise.race([
+            Updates.checkForUpdateAsync(),
+            timeout,
+          ])
           if (check.isAvailable) {
             setCheckingUpdate(false)
             setShowUpdateModal(true)
@@ -49,7 +55,7 @@ export function AppNavigator() {
           }
         }
       } catch {
-        // em dev ou sem rede, ignora
+        // em dev, sem rede ou timeout, ignora
       }
       setCheckingUpdate(false)
     })()
@@ -133,6 +139,7 @@ export function AppNavigator() {
               <Stack.Screen name="SeriesDetail" component={SeriesDetailScreen} />
               <Stack.Screen name="Favorites" component={FavoritesScreen} />
               <Stack.Screen name="History" component={HistoryScreen} />
+              <Stack.Screen name="Watchlist" component={WatchlistScreen} />
               <Stack.Screen
                 name="Player"
                 component={PlayerScreen}
