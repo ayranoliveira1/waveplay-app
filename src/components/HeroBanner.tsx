@@ -11,7 +11,8 @@ import {
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import { useFavorites } from '../hooks'
+import { Ionicons } from '@expo/vector-icons'
+import { useWatchlist } from '../hooks'
 
 interface HeroBannerItem {
   id: number
@@ -192,16 +193,16 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
     [width, bannerHeight],
   )
 
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
   const activeItem = items[activeIndex]
-  const isFav = activeItem ? isFavorite(activeItem.id, activeItem.type) : false
+  const inWatchlist = activeItem ? isInWatchlist(activeItem.id, activeItem.type) : false
 
-  const handleToggleFavorite = useCallback(() => {
+  const handleToggleWatchlist = useCallback(() => {
     if (!activeItem) return
-    if (isFav) {
-      removeFavorite(activeItem.id, activeItem.type)
+    if (inWatchlist) {
+      removeFromWatchlist(activeItem.id, activeItem.type)
     } else {
-      addFavorite({
+      addToWatchlist({
         id: activeItem.id,
         title: activeItem.title,
         posterPath: activeItem.posterPath,
@@ -210,7 +211,7 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
         type: activeItem.type,
       })
     }
-  }, [activeItem, isFav, addFavorite, removeFavorite])
+  }, [activeItem, inWatchlist, addToWatchlist, removeFromWatchlist])
 
   if (itemCount === 0) return null
 
@@ -274,10 +275,14 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
           </Text>
         </Pressable>
         <Pressable
-          onPress={handleToggleFavorite}
+          onPress={handleToggleWatchlist}
           className="items-center justify-center rounded-button bg-white/20 px-4 py-3"
         >
-          <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
+          <Ionicons
+            name={inWatchlist ? 'bookmark' : 'bookmark-outline'}
+            size={22}
+            color="#FFFFFF"
+          />
         </Pressable>
       </View>
     </View>
