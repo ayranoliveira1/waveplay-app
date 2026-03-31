@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Animated, View } from 'react-native'
+import { Animated, View, useWindowDimensions } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 
 interface SplashScreenProps {
@@ -11,6 +11,8 @@ const LETTER_DELAY = 200
 const HOLD_DURATION = 1300
 
 export function SplashScreen({ onFinish }: SplashScreenProps) {
+  const { width } = useWindowDimensions()
+  const fontSize = Math.min(width * 0.13, 52)
   const letterAnims = useRef(LETTERS.map(() => new Animated.Value(0))).current
   const onFinishRef = useRef(onFinish)
   onFinishRef.current = onFinish
@@ -43,7 +45,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           <Animated.Text
             key={i}
             style={{
-              fontSize: 52,
+              fontSize,
               fontWeight: '800',
               color: '#7B2FBE',
               letterSpacing: 2,
