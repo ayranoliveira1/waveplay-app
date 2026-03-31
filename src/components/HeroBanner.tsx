@@ -64,10 +64,7 @@ const HeroBannerSlide = React.memo(function HeroBannerSlide({
           height: bannerHeight * 0.6,
         }}
       />
-      <View
-        className="absolute bottom-0 left-0 right-0 px-4"
-        style={{ paddingBottom: bannerHeight * 0.25 }}
-      >
+      <View className="absolute bottom-0 left-0 right-0 px-4 pb-4">
         <View className="mb-2 flex-row items-center">
           <View className="mr-2 flex-row items-center rounded-full bg-rating/20 px-2 py-0.5">
             <Text className="mr-1 text-xs text-rating">★</Text>
@@ -219,48 +216,27 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
 
   return (
     <View className="mb-6">
-      <View style={{ height: bannerHeight }}>
-        <FlatList
-          ref={flatListRef}
-          data={loopedItems}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => `hero-${item.id}-${index}`}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          initialScrollIndex={startIndex}
-          onScrollBeginDrag={handleScrollBeginDrag}
-          onMomentumScrollEnd={handleMomentumScrollEnd}
-          getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
-            index,
-          })}
-          windowSize={3}
-          maxToRenderPerBatch={3}
-          removeClippedSubviews
-        />
-        <View
-          className="absolute left-4 flex-row items-center"
-          style={{ bottom: 16, gap: 12 }}
-        >
-          <Pressable
-            onPress={() => onPressItem(activeItem.id, activeItem.type)}
-            className="flex-row items-center rounded-button bg-accent px-6 py-3"
-          >
-            <Text className="text-base font-semibold text-white">
-              ▶ Assistir
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={handleToggleFavorite}
-            className="items-center justify-center rounded-button bg-white/20 px-4 py-3"
-          >
-            <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
-          </Pressable>
-        </View>
-      </View>
+      <FlatList
+        ref={flatListRef}
+        data={loopedItems}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `hero-${item.id}-${index}`}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        initialScrollIndex={startIndex}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        windowSize={3}
+        maxToRenderPerBatch={3}
+        removeClippedSubviews
+      />
       {itemCount > 1 && (
         <View
           style={{
@@ -285,6 +261,25 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
           ))}
         </View>
       )}
+      <View
+        className="flex-row items-center px-4"
+        style={{ marginTop: 10, gap: 12 }}
+      >
+        <Pressable
+          onPress={() => onPressItem(activeItem.id, activeItem.type)}
+          className="flex-row items-center rounded-button bg-accent px-6 py-3"
+        >
+          <Text className="text-base font-semibold text-white">
+            ▶ Assistir
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={handleToggleFavorite}
+          className="items-center justify-center rounded-button bg-white/20 px-4 py-3"
+        >
+          <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
