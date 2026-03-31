@@ -7,11 +7,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
 import { MediaCard, Carousel, BackButton } from '../components'
 import { getMovieDetail, getSimilarMovies } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import { useFavorites, useProgress, formatTime } from '../hooks'
+import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
 import type { RootStackParamList, TMDBMovie } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
@@ -23,6 +24,7 @@ export function MovieDetailScreen() {
   const { id } = route.params
   const insets = useSafeAreaInsets()
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
   const { getProgress, reload: reloadProgress } = useProgress()
 
   useFocusEffect(
@@ -62,6 +64,7 @@ export function MovieDetailScreen() {
   }
 
   const isFav = isFavorite(id, 'movie')
+  const inWatchlist = isInWatchlist(id, 'movie')
   const backdropUri = movie.backdrop_path
     ? `${TMDB_IMAGE_SIZES.backdrop.large}${movie.backdrop_path}`
     : null
@@ -71,6 +74,21 @@ export function MovieDetailScreen() {
       removeFavorite(id, 'movie')
     } else {
       addFavorite({
+        id: movie!.id,
+        title: movie!.title,
+        posterPath: movie!.poster_path,
+        backdropPath: movie!.backdrop_path,
+        rating: movie!.vote_average,
+        type: 'movie',
+      })
+    }
+  }
+
+  function handleToggleWatchlist() {
+    if (inWatchlist) {
+      removeFromWatchlist(id, 'movie')
+    } else {
+      addToWatchlist({
         id: movie!.id,
         title: movie!.title,
         posterPath: movie!.poster_path,
@@ -193,6 +211,16 @@ export function MovieDetailScreen() {
             className="items-center justify-center rounded-button bg-background-secondary px-4"
           >
             <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleToggleWatchlist}
+            className="items-center justify-center rounded-button bg-background-secondary px-4"
+          >
+            <Ionicons
+              name={inWatchlist ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color="#FFFFFF"
+            />
           </Pressable>
         </View>
 

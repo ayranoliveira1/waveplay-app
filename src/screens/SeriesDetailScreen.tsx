@@ -7,11 +7,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
 import { SeasonPicker, EpisodeCard, BackButton, Carousel, MediaCard } from '../components'
 import { getSeriesDetail, getSeasonDetail, getSimilarSeries } from '../services/tmdb'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import { useFavorites, useProgress, formatTime } from '../hooks'
+import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
 import type { RootStackParamList, Episode, TMDBSeries } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
@@ -23,6 +24,7 @@ export function SeriesDetailScreen() {
   const { id } = route.params
   const insets = useSafeAreaInsets()
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
   const { getAllProgressForSeries, getProgress, reload: reloadProgress } = useProgress()
   const [selectedSeason, setSelectedSeason] = useState(1)
 
@@ -70,6 +72,7 @@ export function SeriesDetailScreen() {
   }
 
   const isFav = isFavorite(id, 'series')
+  const inWatchlist = isInWatchlist(id, 'series')
   const backdropUri = series.backdrop_path
     ? `${TMDB_IMAGE_SIZES.backdrop.large}${series.backdrop_path}`
     : null
@@ -79,6 +82,21 @@ export function SeriesDetailScreen() {
       removeFavorite(id, 'series')
     } else {
       addFavorite({
+        id: series!.id,
+        title: series!.name,
+        posterPath: series!.poster_path,
+        backdropPath: series!.backdrop_path,
+        rating: series!.vote_average,
+        type: 'series',
+      })
+    }
+  }
+
+  function handleToggleWatchlist() {
+    if (inWatchlist) {
+      removeFromWatchlist(id, 'series')
+    } else {
+      addToWatchlist({
         id: series!.id,
         title: series!.name,
         posterPath: series!.poster_path,
@@ -237,6 +255,16 @@ export function SeriesDetailScreen() {
             className="items-center justify-center rounded-button bg-background-secondary px-4"
           >
             <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleToggleWatchlist}
+            className="items-center justify-center rounded-button bg-background-secondary px-4"
+          >
+            <Ionicons
+              name={inWatchlist ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color="#FFFFFF"
+            />
           </Pressable>
         </View>
 
