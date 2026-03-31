@@ -12,7 +12,6 @@ import {
   getPopularSeries,
   getNowPlayingMovies,
   getTopRatedMovies,
-  getUpcomingMovies,
 } from '../services/tmdb'
 import { useHistory } from '../hooks'
 import type { RootStackParamList, TMDBMovie, TMDBSeries, TMDBMultiSearchResult, HistoryItem } from '../types'
@@ -59,11 +58,6 @@ export function HomeScreen() {
     queryFn: () => getTopRatedMovies(),
   })
 
-  const { data: upcoming, refetch: refetchUpcoming } = useQuery({
-    queryKey: ['movies', 'upcoming'],
-    queryFn: () => getUpcomingMovies(),
-  })
-
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     await Promise.all([
@@ -72,12 +66,11 @@ export function HomeScreen() {
       refetchSeries(),
       refetchNowPlaying(),
       refetchTopRated(),
-      refetchUpcoming(),
       reloadHistory(),
     ])
     setRefreshKey((k) => k + 1)
     setRefreshing(false)
-  }, [refetchTrending, refetchPopular, refetchSeries, refetchNowPlaying, refetchTopRated, refetchUpcoming, reloadHistory])
+  }, [refetchTrending, refetchPopular, refetchSeries, refetchNowPlaying, refetchTopRated, reloadHistory])
 
   function handleMediaPress(id: number, type: 'movie' | 'series') {
     if (type === 'movie') {
@@ -233,26 +226,6 @@ export function HomeScreen() {
             title="Mais Bem Avaliados"
             data={topRated.results.slice(0, 15)}
             keyExtractor={(item: TMDBMovie) => `toprated-${item.id}`}
-            renderItem={(item: TMDBMovie) => (
-              <MediaCard
-                id={item.id}
-                title={item.title}
-                posterPath={item.poster_path}
-                rating={item.vote_average}
-                type="movie"
-                onPress={handleMediaPress}
-              />
-            )}
-          />
-        </AnimatedSection>
-      )}
-
-      {upcoming && (
-        <AnimatedSection key={`upcoming-${refreshKey}`} delay={700}>
-          <Carousel
-            title="Em Breve"
-            data={upcoming.results.slice(0, 15)}
-            keyExtractor={(item: TMDBMovie) => `upcoming-${item.id}`}
             renderItem={(item: TMDBMovie) => (
               <MediaCard
                 id={item.id}
