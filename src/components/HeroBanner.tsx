@@ -35,87 +35,55 @@ const HeroBannerSlide = React.memo(function HeroBannerSlide({
   item,
   width,
   bannerHeight,
-  onPress,
 }: {
   item: HeroBannerItem
   width: number
   bannerHeight: number
-  onPress: () => void
 }) {
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites()
-  const isFav = isFavorite(item.id, item.type)
-
-  function handleToggleFavorite() {
-    if (isFav) {
-      removeFavorite(item.id, item.type)
-    } else {
-      addFavorite({
-        id: item.id,
-        title: item.title,
-        posterPath: item.posterPath,
-        backdropPath: item.backdropPath,
-        rating: item.rating,
-        type: item.type,
-      })
-    }
-  }
-
   const imageUri = item.backdropPath
     ? `${TMDB_IMAGE_SIZES.backdrop.large}${item.backdropPath}`
     : null
 
   return (
-    <Pressable onPress={onPress} style={{ width }}>
-      <View style={{ width, height: bannerHeight }}>
-        {imageUri && (
-          <Image
-            source={{ uri: imageUri }}
-            style={{ width, height: bannerHeight }}
-            contentFit="cover"
-            transition={500}
-          />
-        )}
-        <LinearGradient
-          colors={['transparent', 'rgba(10,10,15,0.8)', '#0A0A0F']}
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: bannerHeight * 0.6,
-          }}
+    <View style={{ width, height: bannerHeight }}>
+      {imageUri && (
+        <Image
+          source={{ uri: imageUri }}
+          style={{ width, height: bannerHeight }}
+          contentFit="cover"
+          transition={500}
         />
-        <View className="absolute bottom-0 left-0 right-0 px-4 pb-4">
-          <View className="mb-2 flex-row items-center">
-            <View className="mr-2 flex-row items-center rounded-full bg-rating/20 px-2 py-0.5">
-              <Text className="mr-1 text-xs text-rating">★</Text>
-              <Text className="text-xs font-bold text-rating">
-                {item.rating.toFixed(1)}
-              </Text>
-            </View>
-          </View>
-          <Text className="mb-2 text-2xl font-bold text-white">
-            {item.title}
-          </Text>
-          <Text className="text-sm text-text-secondary" numberOfLines={2}>
-            {item.overview}
-          </Text>
-          <View className="mt-3 flex-row items-center gap-3">
-            <View className="flex-row items-center rounded-button bg-accent px-6 py-3">
-              <Text className="text-base font-semibold text-white">
-                ▶ Assistir
-              </Text>
-            </View>
-            <Pressable
-              onPress={handleToggleFavorite}
-              className="items-center justify-center rounded-button bg-white/20 px-4 py-3"
-            >
-              <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
-            </Pressable>
+      )}
+      <LinearGradient
+        colors={['transparent', 'rgba(10,10,15,0.8)', '#0A0A0F']}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: bannerHeight * 0.6,
+        }}
+      />
+      <View
+        className="absolute bottom-0 left-0 right-0 px-4"
+        style={{ paddingBottom: bannerHeight * 0.25 }}
+      >
+        <View className="mb-2 flex-row items-center">
+          <View className="mr-2 flex-row items-center rounded-full bg-rating/20 px-2 py-0.5">
+            <Text className="mr-1 text-xs text-rating">★</Text>
+            <Text className="text-xs font-bold text-rating">
+              {item.rating.toFixed(1)}
+            </Text>
           </View>
         </View>
+        <Text className="mb-2 text-2xl font-bold text-white">
+          {item.title}
+        </Text>
+        <Text className="text-sm text-text-secondary" numberOfLines={2}>
+          {item.overview}
+        </Text>
       </View>
-    </Pressable>
+    </View>
   )
 })
 
@@ -222,37 +190,77 @@ export function HeroBanner({ items, onPressItem }: HeroBannerProps) {
         item={item}
         width={width}
         bannerHeight={bannerHeight}
-        onPress={() => onPressItem(item.id, item.type)}
       />
     ),
-    [width, bannerHeight, onPressItem],
+    [width, bannerHeight],
   )
+
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  const activeItem = items[activeIndex]
+  const isFav = activeItem ? isFavorite(activeItem.id, activeItem.type) : false
+
+  const handleToggleFavorite = useCallback(() => {
+    if (!activeItem) return
+    if (isFav) {
+      removeFavorite(activeItem.id, activeItem.type)
+    } else {
+      addFavorite({
+        id: activeItem.id,
+        title: activeItem.title,
+        posterPath: activeItem.posterPath,
+        backdropPath: activeItem.backdropPath,
+        rating: activeItem.rating,
+        type: activeItem.type,
+      })
+    }
+  }, [activeItem, isFav, addFavorite, removeFavorite])
 
   if (itemCount === 0) return null
 
   return (
     <View className="mb-6">
-      <FlatList
-        ref={flatListRef}
-        data={loopedItems}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => `hero-${item.id}-${index}`}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        initialScrollIndex={startIndex}
-        onScrollBeginDrag={handleScrollBeginDrag}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
-        getItemLayout={(_, index) => ({
-          length: width,
-          offset: width * index,
-          index,
-        })}
-        windowSize={3}
-        maxToRenderPerBatch={3}
-        removeClippedSubviews
-      />
+      <View style={{ height: bannerHeight }}>
+        <FlatList
+          ref={flatListRef}
+          data={loopedItems}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => `hero-${item.id}-${index}`}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          initialScrollIndex={startIndex}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+          windowSize={3}
+          maxToRenderPerBatch={3}
+          removeClippedSubviews
+        />
+        <View
+          className="absolute left-4 flex-row items-center"
+          style={{ bottom: 16, gap: 12 }}
+        >
+          <Pressable
+            onPress={() => onPressItem(activeItem.id, activeItem.type)}
+            className="flex-row items-center rounded-button bg-accent px-6 py-3"
+          >
+            <Text className="text-base font-semibold text-white">
+              ▶ Assistir
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleToggleFavorite}
+            className="items-center justify-center rounded-button bg-white/20 px-4 py-3"
+          >
+            <Text className="text-xl">{isFav ? '❤️' : '🤍'}</Text>
+          </Pressable>
+        </View>
+      </View>
       {itemCount > 1 && (
         <View
           style={{
