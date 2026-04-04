@@ -22,3 +22,5 @@ export const TMDB_IMAGE_SIZES = {
     medium: `${TMDB_IMAGE_BASE}/w300`,
   },
 } as const
+
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3333'
