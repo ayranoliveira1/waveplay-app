@@ -192,3 +192,21 @@ export interface CatalogEpisode {
   runtime: number | null
   voteAverage: number
 }
+
+// Stream types
+
+export interface ActiveStreamInfo {
+  streamId: string
+  profileName: string
+  title: string
+  type: 'movie' | 'series'
+  startedAt: string
+}
+
+export interface StreamConflictError {
+  statusCode: 409
+  code: 'MAX_STREAMS_REACHED'
+  message: string
+  maxStreams: number
+  activeStreams: ActiveStreamInfo[]
+}

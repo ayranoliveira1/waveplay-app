@@ -29,6 +29,8 @@ export type {
   CatalogSeriesDetail,
   CatalogSeason,
   CatalogEpisode,
+  ActiveStreamInfo,
+  StreamConflictError,
 } from './api'
 
 export type {
