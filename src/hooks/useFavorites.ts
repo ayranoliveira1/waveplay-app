@@ -1,53 +1,51 @@
-import { useState, useEffect, useCallback } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useCallback, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useProfile } from './useProfile'
+import { getFavorites, toggleFavorite } from '../services/library'
 import type { MediaItem } from '../types'
 
-const FAVORITES_KEY = '@streams_app:favorites'
-
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<MediaItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { activeProfile } = useProfile()
+  const profileId = activeProfile?.id
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    async function loadFavorites() {
-      try {
-        const stored = await AsyncStorage.getItem(FAVORITES_KEY)
-        if (stored) {
-          setFavorites(JSON.parse(stored))
-        }
-      } catch {
-        // silently fail
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadFavorites()
-  }, [])
+  const { data, isLoading } = useQuery({
+    queryKey: ['favorites', profileId],
+    queryFn: () => getFavorites(profileId!),
+    enabled: !!profileId,
+  })
 
-  const saveFavorites = useCallback(async (items: MediaItem[]) => {
-    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(items))
-    setFavorites(items)
-  }, [])
+  const favorites: MediaItem[] = useMemo(
+    () =>
+      (data?.favorites ?? []).map((item) => ({
+        id: item.tmdbId,
+        title: item.title,
+        posterPath: item.posterPath,
+        backdropPath: item.backdropPath,
+        rating: item.rating,
+        type: item.type,
+      })),
+    [data],
+  )
 
   const addFavorite = useCallback(
     async (item: MediaItem) => {
-      const exists = favorites.some(
-        (f) => f.id === item.id && f.type === item.type,
-      )
-      if (!exists) {
-        await saveFavorites([...favorites, item])
-      }
+      if (!profileId) return
+      await toggleFavorite(profileId, item)
+      queryClient.invalidateQueries({ queryKey: ['favorites', profileId] })
     },
-    [favorites, saveFavorites],
+    [profileId, queryClient],
   )
 
   const removeFavorite = useCallback(
     async (id: number, type: 'movie' | 'series') => {
-      await saveFavorites(
-        favorites.filter((f) => !(f.id === id && f.type === type)),
-      )
+      if (!profileId) return
+      const item = favorites.find((f) => f.id === id && f.type === type)
+      if (!item) return
+      await toggleFavorite(profileId, item)
+      queryClient.invalidateQueries({ queryKey: ['favorites', profileId] })
     },
-    [favorites, saveFavorites],
+    [profileId, queryClient, favorites],
   )
 
   const isFavorite = useCallback(
