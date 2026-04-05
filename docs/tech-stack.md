@@ -1,195 +1,131 @@
-# WavePlay API — Tech Stack
+# WavePlay Mobile — Tech Stack
 
 ## Runtime & Linguagem
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| Node.js | 20 LTS | Runtime |
-| TypeScript | ^5.7.2 | Linguagem |
+| React Native | 0.83.4 | Framework mobile |
+| Expo SDK | 55 | Plataforma de build e servicos nativos |
+| TypeScript | ~5.9.2 | Linguagem |
+| React | 19.2.0 | Biblioteca de UI |
 | pnpm | 10.x | Gerenciador de pacotes |
 
 ---
 
-## Framework & Core
+## Navegacao
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| @nestjs/common | ^11.1.11 | Módulos, decorators, pipes, guards, filters |
-| @nestjs/core | ^11.1.11 | Core do NestJS |
-| @nestjs/platform-express | ^11.1.11 | HTTP adapter (Express) |
-| @nestjs/config | ^4.0.0 | Variáveis de ambiente |
-| @nestjs/throttler | ^6.5.0 | Rate limiting |
+| @react-navigation/native | ^7.2.2 | Core de navegacao |
+| @react-navigation/native-stack | ^7.14.10 | Stack navigator (telas empilhadas) |
+| @react-navigation/bottom-tabs | ^7.15.9 | Tab navigator (barra inferior) |
+| react-native-screens | ^4.23.0 | Telas nativas otimizadas |
+| react-native-safe-area-context | ^5.6.2 | Safe area (notch, barra de status) |
 
 ---
 
-## Banco de Dados
+## Estado & Data Fetching
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| PostgreSQL | 17 | Banco relacional principal |
-| @prisma/client | ^7.2.0 | ORM type-safe |
-| prisma | ^7.2.0 | CLI de migrations e geração |
-| @prisma/adapter-pg | ^7.2.0 | Adapter PostgreSQL para Prisma |
-| pg | ^8.16.3 | Driver PostgreSQL nativo |
-| uuidv7 | ^1.2.1 | Geração de UUID v7 (usado no UniqueEntityID) |
+| @tanstack/react-query | ^5.95.2 | Cache de servidor, fetching, invalidacao |
+| React Context | built-in | Estado global (auth, perfil ativo) |
 
 ---
 
-## Autenticação & Segurança
+## Estilizacao
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| @nestjs/jwt | ^11.x | Geração e verificação de JWT (access + refresh tokens) |
-| @nestjs/passport | ^11.x | Integração com estratégias de autenticação |
-| passport-jwt | ^4.x | Estratégia JWT para Passport |
-| argon2 | ^0.44.0 | Hash de senhas (Argon2id — vencedor da Password Hashing Competition) |
-| helmet | ^8.x | Headers HTTP de segurança |
+| NativeWind (uniwind) | ^1.6.1 | Tailwind CSS para React Native |
+| tailwindcss | ^4.2.2 | Engine de classes utilitarias |
 
 ---
 
-## Validação
+## Formularios & Validacao
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| zod | ^3.25.76 | Validação de schemas (DTOs, env vars) |
+| react-hook-form | ^7.72.0 | Gerenciamento de formularios |
+| @hookform/resolvers | ^5.2.2 | Integracao com Zod |
+| zod | ^4.3.6 | Validacao de schemas (login, register, perfil) |
 
 ---
 
-## Cache
+## UI & Midia
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| Redis | 7 | Cache principal (catálogo TMDB, sessões) |
-| ioredis | ^5.10.0 | Client Redis para Node.js |
-| @nestjs/cache-manager | ^3.x | Abstração de cache do NestJS |
-| cache-manager-ioredis-yet | ^2.x | Adapter Redis para cache-manager |
+| expo-image | ^55.0.6 | Carregamento otimizado de imagens |
+| expo-linear-gradient | ^55.0.9 | Gradientes (backdrop, hero banner) |
+| react-native-svg | ^15.15.3 | Icones SVG |
+| @expo/vector-icons (Ionicons) | built-in | Icones do sistema |
+| react-native-webview | ^13.16.0 | Player de video (EmbedPlay) |
 
 ---
 
-## HTTP Client
+## Seguranca & Storage
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| axios | ^1.13.4 | Requests para API do TMDB (proxy do catálogo) |
+| expo-secure-store | ^55.0.11 | Armazenamento seguro de tokens (Keychain/Keystore) |
+| @react-native-async-storage/async-storage | ^2.2.0 | Storage local (historico de busca) |
 
 ---
 
-## Testes
+## Infra & Deploy
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| vitest | ^4.0.18 | Test runner |
-| @nestjs/testing | ^11.1.11 | Utilitários de teste do NestJS |
-| @faker-js/faker | ^10.3.0 | Dados fake para testes |
-| supertest | ^7.x | Testes e2e de endpoints HTTP |
+| expo-updates | ~55.0.16 | Atualizacoes OTA (over-the-air) |
+| expo-status-bar | ~55.0.4 | Controle da barra de status |
+| expo-system-ui | ^55.0.11 | Configuracao de UI do sistema |
+| EAS Build | cloud | Build nativo (Android APK/AAB, iOS IPA) |
 
 ---
 
 ## Dev & Tooling
 
-| Tech | Versão | Uso |
+| Tech | Versao | Uso |
 |------|--------|-----|
-| @nestjs/cli | ^11.0.5 | CLI do NestJS (build, generate) |
-| @nestjs/schematics | ^11.0.2 | Geradores de código |
-| @swc/core | ^1.15.11 | Compilador rápido (substitui tsc no build) |
-| unplugin-swc | ^1.5.9 | Plugin SWC para Vitest |
-| vite-tsconfig-paths | ^6.0.5 | Path aliases (@/) no Vitest |
-| eslint | ^9.x | Linting |
-| prettier | ^3.x | Formatação de código |
-| ts-node | ^10.9.2 | Execução TS (CLI, seeds) |
-| dotenv | ^17.2.3 | Carregamento de .env |
+| eslint | ^10.1.0 | Linting |
+| @typescript-eslint/eslint-plugin | ^8.57.2 | Regras TypeScript para ESLint |
+| @typescript-eslint/parser | ^8.57.2 | Parser TypeScript para ESLint |
+| eslint-plugin-react | ^7.37.5 | Regras React |
+| eslint-plugin-react-hooks | ^7.0.1 | Regras de hooks |
+| eslint-plugin-import | ^2.32.0 | Ordem de imports |
+| eslint-config-prettier | ^10.1.8 | Desativa regras conflitantes com Prettier |
+| prettier | ^3.8.1 | Formatacao de codigo |
 
 ---
 
-## Deploy & Infra
-
-| Tech | Uso |
-|------|-----|
-| Docker | Containerização do app + PostgreSQL + Redis |
-| docker-compose | Orquestração local (api + db + redis) |
-
----
-
-## Dependências do package.json
-
-### Produção
-
-```json
-{
-  "@nestjs/common": "^11.1.11",
-  "@nestjs/core": "^11.1.11",
-  "@nestjs/platform-express": "^11.1.11",
-  "@nestjs/config": "^4.0.0",
-  "@nestjs/jwt": "^11.x",
-  "@nestjs/passport": "^11.x",
-  "@nestjs/throttler": "^6.5.0",
-  "@nestjs/cache-manager": "^3.x",
-  "@prisma/client": "^7.2.0",
-  "@prisma/adapter-pg": "^7.2.0",
-  "pg": "^8.16.3",
-  "passport": "^0.7.x",
-  "passport-jwt": "^4.x",
-  "argon2": "^0.44.0",
-  "zod": "^3.25.76",
-  "axios": "^1.13.4",
-  "helmet": "^8.x",
-  "ioredis": "^5.10.0",
-  "cache-manager": "^6.x",
-  "cache-manager-ioredis-yet": "^2.x",
-  "dotenv": "^17.2.3",
-  "reflect-metadata": "^0.2.2",
-  "rxjs": "^7.8.1",
-  "uuidv7": "^1.2.1"
-}
-```
-
-### Desenvolvimento
-
-```json
-{
-  "prisma": "^7.2.0",
-  "typescript": "^5.7.2",
-  "vitest": "^4.0.18",
-  "@nestjs/cli": "^11.0.5",
-  "@nestjs/schematics": "^11.0.2",
-  "@nestjs/testing": "^11.1.11",
-  "@swc/core": "^1.15.11",
-  "unplugin-swc": "^1.5.9",
-  "vite-tsconfig-paths": "^6.0.5",
-  "@faker-js/faker": "^10.3.0",
-  "supertest": "^7.x",
-  "eslint": "^9.x",
-  "prettier": "^3.x",
-  "ts-node": "^10.9.2",
-  "@types/node": "^22.10.2",
-  "@types/express": "^5.0.0",
-  "@types/pg": "^8.16.0",
-  "@types/passport-jwt": "^4.x",
-  "@types/supertest": "^6.x"
-}
-```
-
----
-
-## Variáveis de Ambiente
+## Variaveis de Ambiente
 
 ```env
-# App
-PORT=3333
-NODE_ENV=development
+# API
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3333
 
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/waveplay
+# TMDB Images (CDN publica, sem token)
+EXPO_PUBLIC_TMDB_IMAGE_BASE=https://image.tmdb.org/t/p
 
-# JWT
-JWT_SECRET=sua-chave-secreta-forte
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=48h
+# Player
+EXPO_PUBLIC_EMBED_PLAY_BASE_URL=https://embedplay.example.com
+```
 
-# TMDB (proxy)
-TMDB_ACCESS_TOKEN=eyJhbGciOiJIUzI1NiJ9...
-TMDB_BASE_URL=https://api.themoviedb.org/3
+> **Nota:** O token do TMDB fica apenas no backend. O app acessa imagens via CDN publica e o catalogo via proxy da API.
 
-# Redis
-REDIS_URL=redis://localhost:6379
+---
+
+## Scripts
+
+```json
+{
+  "start": "expo start",
+  "android": "expo start --android",
+  "ios": "expo start --ios",
+  "lint": "eslint src/",
+  "lint:fix": "eslint src/ --fix",
+  "format": "prettier --write \"src/**/*.{ts,tsx}\" \"App.tsx\"",
+  "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"App.tsx\""
+}
 ```

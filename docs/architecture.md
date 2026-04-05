@@ -1,283 +1,147 @@
-# WavePlay API — Arquitetura Backend
+# WavePlay Mobile — Arquitetura
 
 ## Stack
 
-- **Runtime:** Node.js
-- **Framework:** NestJS
-- **ORM:** Prisma
-- **Banco:** PostgreSQL
-- **Validação:** Zod
-- **Auth:** JWT (access + refresh token) com argon2
-- **Padrão:** DDD com core reutilizado do projeto Estuda
+- **Framework:** React Native (Expo SDK 55)
+- **Linguagem:** TypeScript
+- **Navegacao:** React Navigation (native-stack + bottom-tabs)
+- **Estado server:** TanStack React Query
+- **Estado local:** React Context (AuthContext, ProfileContext)
+- **Estilizacao:** NativeWind (Tailwind CSS para React Native)
+- **HTTP Client:** Fetch API com interceptor customizado (`services/api.ts`)
+- **Storage seguro:** expo-secure-store (tokens)
+- **Validacao:** Zod + React Hook Form
 
 ---
 
 ## Estrutura de Pastas
 
 ```
-waveplay-api/
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
+streams-tests/
+├── App.tsx                        # Entry point (providers)
+├── docs/                          # Documentacao do projeto
+├── tasks/                         # Task files padronizados
 │
 ├── src/
-│   ├── main.ts
-│   ├── app.module.ts
+│   ├── global.css                 # Estilos globais (Tailwind)
 │   │
-│   ├── core/                            # Kernel DDD (do Estuda)
-│   │   ├── either.ts                    # Left (erro) / Right (sucesso)
-│   │   ├── entities/
-│   │   │   ├── entity.ts               # Classe base com ID genérico
-│   │   │   ├── aggregate-root.ts       # Extends Entity + domain events
-│   │   │   ├── unique-entity-id.ts     # UUID wrapper
-│   │   │   ├── unique-code.ts          # Gerador de códigos alfanuméricos
-│   │   │   ├── value-object.ts         # Classe base para Value Objects
-│   │   │   └── watched-list.ts         # Lista que rastreia new/removed items
-│   │   ├── events/
-│   │   │   ├── domain-event.ts         # Interface: ocurredAt + getAggregateId()
-│   │   │   ├── domain-events.ts        # Registry: register, dispatch, markForDispatch
-│   │   │   └── event-handler.ts        # Interface: setupSubscriptions()
-│   │   ├── errors/
-│   │   │   ├── use-case-error.ts       # Erro base: statusCode + errors[]
-│   │   │   └── errors/
-│   │   │       ├── not-allowed-error.ts       # 403
-│   │   │       ├── resource-not-found-error.ts # 404
-│   │   │       └── unexpected-error.ts         # 500
-│   │   └── types/
-│   │       └── optional.ts             # Utility: torna campos opcionais
+│   ├── components/                # Componentes reutilizaveis
+│   │   ├── AnimatedSection.tsx    # Wrapper com animacao de entrada
+│   │   ├── BackButton.tsx         # Botao de voltar (absolute/inline)
+│   │   ├── Carousel.tsx           # Lista horizontal genérica
+│   │   ├── ContinueWatchingCard.tsx # Card de "Continue Assistindo"
+│   │   ├── EpisodeCard.tsx        # Card de episodio com progresso
+│   │   ├── GenreChips.tsx         # Chips de genero
+│   │   ├── HeroBanner.tsx         # Banner principal da Home
+│   │   ├── MediaCard.tsx          # Card de filme/serie (poster)
+│   │   ├── RatingBadge.tsx        # Badge de avaliacao
+│   │   ├── ScreenHeader.tsx       # Header padrao de tela
+│   │   ├── SeasonPicker.tsx       # Seletor de temporada
+│   │   ├── SessionKilledOverlay.tsx # Overlay quando sessao e encerrada
+│   │   ├── StreamConflictModal.tsx  # Modal de conflito de telas
+│   │   ├── SubscriptionBanner.tsx   # Banner de assinatura sobre backdrop
+│   │   ├── index.ts               # Barrel export
+│   │   └── ui/                    # Componentes UI primitivos
+│   │       ├── Badge.tsx
+│   │       ├── BottomSheetMenu.tsx
+│   │       ├── Button.tsx
+│   │       ├── Chip.tsx
+│   │       ├── EmptyState.tsx
+│   │       ├── ErrorState.tsx
+│   │       ├── Input.tsx
+│   │       ├── Skeleton.tsx
+│   │       ├── UpdateModal.tsx
+│   │       └── index.ts
 │   │
-│   ├── shared/                          # Infraestrutura compartilhada
-│   │   ├── database/
-│   │   │   ├── prisma.service.ts
-│   │   │   └── database.module.ts
-│   │   ├── env/
-│   │   │   ├── env.ts                  # Schema Zod das env vars
-│   │   │   ├── env.service.ts
-│   │   │   └── env.module.ts
-│   │   ├── filters/
-│   │   │   └── nest-exception-filter.ts # Catch global → { success, data, error }
-│   │   ├── http/
-│   │   │   ├── response-type.ts         # Interface HttpResponse<T, E>
-│   │   │   └── custom-http.exception.ts # UseCaseError → HttpException
-│   │   └── pipes/
-│   │       └── zod-validation.pipe.ts   # ZodError → CustomHttpException
+│   ├── constants/
+│   │   ├── api.ts                 # URLs base (API, TMDB images, EmbedPlay)
+│   │   └── theme.ts               # Cores de perfil, helpers visuais
 │   │
-│   └── modules/                         # Bounded Contexts
-│       │
-│       ├── identity/                    # BC: Identidade & Acesso
-│       │   ├── domain/
-│       │   │   ├── entities/
-│       │   │   │   └── user.ts
-│       │   │   ├── repositories/
-│       │   │   │   ├── users-repository.ts
-│       │   │   │   ├── refresh-tokens-repository.ts
-│       │   │   │   └── password-reset-tokens-repository.ts
-│       │   │   └── errors/
-│       │   │       ├── invalid-credentials.error.ts
-│       │   │       ├── email-already-exists.error.ts
-│       │   │       ├── account-locked.error.ts
-│       │   │       └── invalid-reset-token.error.ts
-│       │   ├── application/
-│       │   │   ├── ports/
-│       │   │   │   ├── hasher.port.ts       # Interface: hash(), compare()
-│       │   │   │   └── encrypter.port.ts    # Interface: sign(), verify()
-│       │   │   └── use-cases/
-│       │   │       ├── register-use-case.ts
-│       │   │       ├── authenticate-use-case.ts
-│       │   │       ├── refresh-token-use-case.ts
-│       │   │       ├── logout-use-case.ts
-│       │   │       ├── logout-all-use-case.ts
-│       │   │       ├── forgot-password-use-case.ts
-│       │   │       └── reset-password-use-case.ts
-│       │   └── infra/
-│       │       ├── identity.module.ts
-│       │       ├── cryptography/
-│       │       │   ├── argon2-hasher.ts
-│       │       │   └── jwt-encrypter.ts
-│       │       ├── persistence/
-│       │       │   ├── prisma-user-mapper.ts
-│       │       │   ├── prisma-users-repository.ts
-│       │       │   ├── prisma-refresh-token-mapper.ts
-│       │       │   ├── prisma-refresh-tokens-repository.ts
-│       │       │   ├── prisma-password-reset-token-mapper.ts
-│       │       │   └── prisma-password-reset-tokens-repository.ts
-│       │       ├── controllers/
-│       │       │   ├── register.controller.ts
-│       │       │   ├── authenticate.controller.ts
-│       │       │   ├── refresh-token.controller.ts
-│       │       │   ├── logout.controller.ts
-│       │       │   ├── logout-all.controller.ts
-│       │       │   ├── forgot-password.controller.ts
-│       │       │   └── reset-password.controller.ts
-│       │       ├── presenters/
-│       │       │   └── user-presenter.ts
-│       │       ├── guards/
-│       │       │   └── auth.guard.ts
-│       │       └── decorators/
-│       │           ├── get-user.decorator.ts
-│       │           └── public.decorator.ts
-│       │
-│       ├── profile/                     # BC: Perfis (estilo Netflix)
-│       │   ├── domain/
-│       │   │   ├── entities/
-│       │   │   │   └── profile.ts
-│       │   │   ├── repositories/
-│       │   │   │   └── profiles-repository.ts
-│       │   │   └── errors/
-│       │   │       └── max-profiles-reached.error.ts
-│       │   ├── application/
-│       │   │   └── use-cases/
-│       │   │       ├── create-profile-use-case.ts
-│       │   │       ├── list-profiles-use-case.ts
-│       │   │       ├── update-profile-use-case.ts
-│       │   │       └── delete-profile-use-case.ts
-│       │   └── infra/
-│       │       ├── profile.module.ts
-│       │       ├── persistence/
-│       │       │   ├── prisma-profile-mapper.ts
-│       │       │   └── prisma-profiles-repository.ts
-│       │       ├── controllers/
-│       │       │   ├── create-profile.controller.ts
-│       │       │   ├── list-profiles.controller.ts
-│       │       │   ├── update-profile.controller.ts
-│       │       │   └── delete-profile.controller.ts
-│       │       └── presenters/
-│       │           └── profile-presenter.ts
-│       │
-│       ├── catalog/                     # BC: Catálogo (proxy TMDB)
-│       │   ├── domain/
-│       │   │   └── ports/
-│       │   │       └── catalog-provider.port.ts
-│       │   ├── application/
-│       │   │   └── use-cases/
-│       │   │       ├── get-trending-use-case.ts
-│       │   │       ├── get-movie-detail-use-case.ts
-│       │   │       ├── get-series-detail-use-case.ts
-│       │   │       └── search-catalog-use-case.ts
-│       │   └── infra/
-│       │       ├── catalog.module.ts
-│       │       ├── tmdb-catalog-provider.ts
-│       │       ├── catalog-cache.service.ts
-│       │       ├── controllers/
-│       │       │   ├── trending.controller.ts
-│       │       │   ├── movie-detail.controller.ts
-│       │       │   ├── series-detail.controller.ts
-│       │       │   └── search.controller.ts
-│       │       └── presenters/
-│       │           ├── movie-presenter.ts
-│       │           └── series-presenter.ts
-│       │
-│       ├── library/                     # BC: Biblioteca do Usuário
-│       │   ├── domain/
-│       │   │   ├── entities/
-│       │   │   │   ├── favorite.ts
-│       │   │   │   └── watchlist-item.ts
-│       │   │   └── repositories/
-│       │   │       ├── favorites-repository.ts
-│       │   │       └── watchlist-repository.ts
-│       │   ├── application/
-│       │   │   └── use-cases/
-│       │   │       ├── toggle-favorite-use-case.ts
-│       │   │       ├── list-favorites-use-case.ts
-│       │   │       ├── toggle-watchlist-use-case.ts
-│       │   │       └── list-watchlist-use-case.ts
-│       │   └── infra/
-│       │       ├── library.module.ts
-│       │       ├── persistence/
-│       │       │   ├── prisma-favorite-mapper.ts
-│       │       │   ├── prisma-watchlist-mapper.ts
-│       │       │   ├── prisma-favorites-repository.ts
-│       │       │   └── prisma-watchlist-repository.ts
-│       │       ├── controllers/
-│       │       │   ├── toggle-favorite.controller.ts
-│       │       │   ├── list-favorites.controller.ts
-│       │       │   ├── toggle-watchlist.controller.ts
-│       │       │   └── list-watchlist.controller.ts
-│       │       └── presenters/
-│       │           └── media-list-presenter.ts
-│       │
-│       ├── subscription/                # BC: Planos & Telas Simultâneas
-│       │   ├── domain/
-│       │   │   ├── entities/
-│       │   │   │   ├── plan.ts
-│       │   │   │   └── active-stream.ts
-│       │   │   ├── repositories/
-│       │   │   │   ├── plans-repository.ts
-│       │   │   │   └── active-streams-repository.ts
-│       │   │   └── errors/
-│       │   │       ├── max-profiles-reached.error.ts
-│       │   │       └── max-streams-reached.error.ts
-│       │   ├── application/
-│       │   │   └── use-cases/
-│       │   │       ├── list-plans-use-case.ts
-│       │   │       ├── start-stream-use-case.ts
-│       │   │       ├── ping-stream-use-case.ts
-│       │   │       ├── stop-stream-use-case.ts
-│       │   │       └── cleanup-expired-streams-use-case.ts
-│       │   └── infra/
-│       │       ├── subscription.module.ts
-│       │       ├── persistence/
-│       │       │   ├── prisma-plan-mapper.ts
-│       │       │   ├── prisma-active-stream-mapper.ts
-│       │       │   ├── prisma-plans-repository.ts
-│       │       │   └── prisma-active-streams-repository.ts
-│       │       ├── controllers/
-│       │       │   ├── list-plans.controller.ts
-│       │       │   ├── start-stream.controller.ts
-│       │       │   ├── ping-stream.controller.ts
-│       │       │   └── stop-stream.controller.ts
-│       │       └── presenters/
-│       │           └── plan-presenter.ts
-│       │
-│       └── playback/                    # BC: Reprodução & Histórico
-│           ├── domain/
-│           │   ├── entities/
-│           │   │   ├── progress.ts
-│           │   │   └── history-item.ts
-│           │   └── repositories/
-│           │       ├── progress-repository.ts
-│           │       └── history-repository.ts
-│           ├── application/
-│           │   └── use-cases/
-│           │       ├── save-progress-use-case.ts
-│           │       ├── get-continue-watching-use-case.ts
-│           │       ├── add-to-history-use-case.ts
-│           │       ├── list-history-use-case.ts
-│           │       └── clear-history-use-case.ts
-│           └── infra/
-│               ├── playback.module.ts
-│               ├── persistence/
-│               │   ├── prisma-progress-mapper.ts
-│               │   ├── prisma-history-mapper.ts
-│               │   ├── prisma-progress-repository.ts
-│               │   └── prisma-history-repository.ts
-│               ├── controllers/
-│               │   ├── save-progress.controller.ts
-│               │   ├── continue-watching.controller.ts
-│               │   ├── list-history.controller.ts
-│               │   └── clear-history.controller.ts
-│               └── presenters/
-│                   ├── progress-presenter.ts
-│                   └── history-presenter.ts
+│   ├── contexts/
+│   │   ├── AuthContext.tsx         # Autenticacao (user, signIn, signOut)
+│   │   └── ProfileContext.tsx      # Perfil ativo (selecao, CRUD)
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.ts             # Acesso ao AuthContext
+│   │   ├── useFavorites.ts        # CRUD favoritos (React Query)
+│   │   ├── useHistory.ts          # Historico de reproducao
+│   │   ├── useProgress.ts         # Progresso de reproducao + formatTime
+│   │   ├── useProfile.ts          # Acesso ao ProfileContext
+│   │   ├── useSearchHistory.ts    # Historico de buscas (AsyncStorage)
+│   │   ├── useStream.ts           # Lifecycle de stream (start/ping/stop)
+│   │   ├── useSubscription.ts     # Verificacao de assinatura ativa
+│   │   ├── useWatchlist.ts        # CRUD watchlist (React Query)
+│   │   └── index.ts               # Barrel export
+│   │
+│   ├── navigation/
+│   │   ├── AppNavigator.tsx       # Root navigator (auth check + OTA update)
+│   │   ├── AuthNavigator.tsx      # Stack: Login, Register, ForgotPassword
+│   │   └── MainNavigator.tsx      # Bottom tabs: Home, Movies, Series, Profile
+│   │
+│   ├── screens/
+│   │   ├── SplashScreen.tsx       # Tela de splash animada
+│   │   ├── LoginScreen.tsx        # Login com email/senha
+│   │   ├── RegisterScreen.tsx     # Registro de conta
+│   │   ├── ForgotPasswordScreen.tsx # Reset de senha
+│   │   ├── ProfileSelectionScreen.tsx # Selecao de perfil (estilo Netflix)
+│   │   ├── ProfileFormScreen.tsx  # Criar/editar perfil
+│   │   ├── HomeScreen.tsx         # Trending, carouseis, continue watching
+│   │   ├── MoviesScreen.tsx       # Listas de filmes por categoria
+│   │   ├── SeriesScreen.tsx       # Listas de series por categoria
+│   │   ├── MovieDetailScreen.tsx  # Detalhe do filme + assistir
+│   │   ├── SeriesDetailScreen.tsx # Detalhe da serie + episodios
+│   │   ├── SearchScreen.tsx       # Busca no catalogo
+│   │   ├── PlayerScreen.tsx       # WebView com player (EmbedPlay)
+│   │   ├── ProfileScreen.tsx      # Menu do perfil (conta, favoritos, etc)
+│   │   ├── AccountScreen.tsx      # Dados da conta + subscription
+│   │   ├── PlansScreen.tsx        # Listagem de planos disponiveis
+│   │   └── index.ts               # Barrel export
+│   │
+│   ├── services/
+│   │   ├── api.ts                 # HTTP client com auto-refresh de token
+│   │   ├── token-storage.ts       # SecureStore (refresh) + memoria (access)
+│   │   ├── catalog.ts             # Endpoints de catalogo (filmes, series)
+│   │   ├── library.ts             # Endpoints de favoritos e watchlist
+│   │   ├── playback.ts            # Endpoints de progresso e historico
+│   │   ├── stream.ts              # Endpoints de stream (start/ping/stop)
+│   │   ├── plans.ts               # Endpoint de planos
+│   │   └── embedplay.ts           # Gerador de URL do player
+│   │
+│   └── types/
+│       ├── api.ts                 # Tipos do catalogo (Movie, Series, Episode, Plan, etc)
+│       ├── api-response.ts        # ApiResponse<T>, UserData, UserSubscription
+│       ├── navigation.ts          # RootStackParamList, AuthStackParamList, MainTabParamList
+│       └── index.ts               # Barrel export
 ```
 
 ---
 
-## Mapa de Bounded Contexts
+## Mapa de Navegacao
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌───────────────┐
-│  Identity    │────▶│  Profile     │◀────│ Subscription  │
-│  (auth/user) │     │  (perfis)    │     │ (planos/telas)│
-└──────┬───────┘     └──────┬───────┘     └───────────────┘
-       │                    │ profileId
-       │       ┌────────────┼────────────┐
-       │       ▼            ▼            ▼
-       │ ┌────────────┐ ┌──────────┐ ┌──────────┐
-       └▶│  Library    │ │ Playback │ │ Catalog  │
-         │  (fav/watch │ │(progresso│ │(proxy    │
-         │   /list)    │ │/history) │ │ TMDB)    │
-         └────────────┘ └──────────┘ └──────────┘
+AppNavigator (root)
+├── [!authenticated] AuthNavigator (stack)
+│   ├── Login
+│   ├── Register
+│   └── ForgotPassword
+│
+├── [authenticated, !activeProfile] ProfileSelection → ProfileForm
+│
+└── [authenticated, activeProfile] MainNavigator (bottom-tabs)
+    ├── Home
+    ├── Movies
+    ├── Series
+    └── Profile
+    
+    Stack screens (sobre as tabs):
+    ├── MovieDetail
+    ├── SeriesDetail
+    ├── Search
+    ├── Player
+    ├── ProfileSelection
+    ├── ProfileForm
+    ├── Account
+    └── Plans
 ```
 
 ---
@@ -285,22 +149,75 @@ waveplay-api/
 ## Fluxo de Dados
 
 ```
-Request HTTP
+Screen / Hook
     ↓
-Controller (valida body com Zod via ZodValidationPipe)
+Service (api.ts — fetch com interceptor)
     ↓
-Use Case (lógica de negócio, retorna Either<Error, Success>)
+API Backend (NestJS)
     ↓
-Either check:
-  ├── isLeft()  → throw CustomHttpException (capturado pelo AllExceptionsFilter)
-  └── isRight() → Presenter.toHTTP(entity) → HttpResponse { success, data, error }
+Response: { success: boolean, data?: T, error?: E[] }
     ↓
-Response HTTP
+React Query (cache, invalidacao, retry)
+    ↓
+UI (re-render automatico)
+```
+
+### Interceptor de Token (`services/api.ts`)
+
+```
+Request
+  ↓
+Adiciona Authorization: Bearer <accessToken> (da memoria)
+  ↓
+Se 401 → tenta refresh com refreshToken (do SecureStore)
+  ├── Sucesso → salva novos tokens → retry do request original
+  └── Falha → chama onUnauthorized() → logout
+  ↓
+Response tipado: ApiResponse<T>
 ```
 
 ---
 
-## Padrão de Response
+## Estado Global
+
+### AuthContext (`contexts/AuthContext.tsx`)
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `user` | `UserData \| null` | Dados do usuario logado (inclui subscription) |
+| `isAuthenticated` | `boolean` | Se tem usuario |
+| `isLoading` | `boolean` | Restaurando sessao |
+| `signIn()` | `function` | Login (email + senha) |
+| `signOut()` | `function` | Logout (limpa tokens) |
+
+### ProfileContext (`contexts/ProfileContext.tsx`)
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `activeProfile` | `Profile \| null` | Perfil selecionado |
+| `profiles` | `Profile[]` | Lista de perfis do usuario |
+| `isLoading` | `boolean` | Carregando perfis |
+| `selectProfile()` | `function` | Selecionar perfil ativo |
+| `clearProfile()` | `function` | Limpar selecao |
+
+---
+
+## Comunicacao com Backend
+
+O app consome a API WavePlay (NestJS) que segue DDD com bounded contexts:
+
+| BC no Backend | Uso no App |
+|---------------|------------|
+| Identity | Login, registro, refresh token, forgot password |
+| Profile | Selecao e CRUD de perfis |
+| Catalog | Trending, listas, detalhes, busca (proxy TMDB) |
+| Library | Favoritos e watchlist por perfil |
+| Playback | Progresso e historico por perfil |
+| Subscription | Planos disponiveis, controle de streams |
+
+---
+
+## Padrao de Response da API
 
 Todas as rotas retornam:
 
@@ -319,95 +236,58 @@ Em caso de erro:
   "success": false,
   "data": [],
   "error": [
-    { "message": "Credenciais inválidas.", "path": ["email"] }
+    { "message": "Credenciais invalidas.", "path": ["email"] }
   ]
 }
 ```
 
 ---
 
-## Autenticação
+## Token Storage
 
-- **Register:** POST /auth/register → cria user com argon2 hash → retorna tokens
-- **Login:** POST /auth/login → valida argon2 → retorna { accessToken (15min), refreshToken (48h) }
-- **Refresh:** POST /auth/refresh → rotaciona refresh token (single-use)
-- **Logout:** POST /auth/logout → invalida refresh token no banco
-- **Logout-all:** POST /auth/logout-all → revoga todas as families do user
-- **Forgot-password:** POST /auth/forgot-password → envia email com token de reset (15min)
-- **Reset-password:** POST /auth/reset-password → valida token → atualiza senha → revoga todas as families
-- **Guard:** JwtAuthGuard protege todas as rotas exceto @Public()
-- **Storage no app:** accessToken em memória, refreshToken em expo-secure-store
+### Mobile (React Native)
 
----
+| Token | Storage | Motivo |
+|-------|---------|--------|
+| Access Token | `expo-secure-store` (Keychain/Keystore) | Protegido pelo SO, persiste entre sessoes |
+| Refresh Token | `expo-secure-store` (Keychain/Keystore) | Longo (48h), protegido pelo SO |
 
-## Endpoints
+### Web (Browser)
 
-| Método | Rota | BC | Auth | Descrição |
-|--------|------|----|------|-----------|
-| POST | /auth/register | identity | Public | Criar conta |
-| POST | /auth/login | identity | Public | Login |
-| POST | /auth/refresh | identity | Public | Renovar tokens |
-| POST | /auth/logout | identity | Auth | Invalidar refresh (family atual) |
-| POST | /auth/logout-all | identity | Auth | Revogar todas as families do user |
-| POST | /auth/forgot-password | identity | Public | Enviar email com token de reset |
-| POST | /auth/reset-password | identity | Public | Validar token e atualizar senha |
-| GET | /profiles | profile | Auth | Listar perfis do user |
-| POST | /profiles | profile | Auth | Criar perfil (max 5) |
-| PATCH | /profiles/:id | profile | Auth | Editar perfil |
-| DELETE | /profiles/:id | profile | Auth | Remover perfil |
-| GET | /plans | subscription | Public | Listar planos disponíveis |
-| POST | /streams/start | subscription | Auth | Iniciar reprodução (checa limite) |
-| PUT | /streams/:id/ping | subscription | Auth | Heartbeat do player (30s) |
-| DELETE | /streams/:id | subscription | Auth | Parar reprodução |
-| GET | /catalog/trending | catalog | Auth | Trending (proxy TMDB) |
-| GET | /catalog/movies/:id | catalog | Auth | Detalhe filme |
-| GET | /catalog/movies/popular | catalog | Auth | Filmes populares |
-| GET | /catalog/movies/top-rated | catalog | Auth | Filmes mais bem avaliados |
-| GET | /catalog/movies/now-playing | catalog | Auth | Filmes em cartaz |
-| GET | /catalog/movies/upcoming | catalog | Auth | Filmes em breve |
-| GET | /catalog/series/:id | catalog | Auth | Detalhe série |
-| GET | /catalog/series/:id/seasons/:season | catalog | Auth | Episódios da temporada |
-| GET | /catalog/series/popular | catalog | Auth | Séries populares |
-| GET | /catalog/series/top-rated | catalog | Auth | Séries mais bem avaliadas |
-| GET | /catalog/series/airing-today | catalog | Auth | Séries no ar hoje |
-| GET | /catalog/series/on-the-air | catalog | Auth | Séries em exibição |
-| GET | /catalog/search?q= | catalog | Auth | Busca |
-| GET | /favorites/:profileId | library | Auth | Listar favoritos |
-| POST | /favorites/:profileId | library | Auth | Toggle favorito |
-| GET | /watchlist/:profileId | library | Auth | Listar watchlist |
-| POST | /watchlist/:profileId | library | Auth | Toggle watchlist |
-| PUT | /progress/:profileId | playback | Auth | Salvar progresso |
-| GET | /progress/:profileId/continue | playback | Auth | Continue watching |
-| GET | /history/:profileId | playback | Auth | Listar histórico |
-| POST | /history/:profileId | playback | Auth | Adicionar ao histórico |
-| DELETE | /history/:profileId | playback | Auth | Limpar histórico |
+| Token | Storage | Motivo |
+|-------|---------|--------|
+| Access Token | Memoria (variavel JS) | Curto (15min), nunca em localStorage |
+| Refresh Token | httpOnly cookie (Secure, SameSite=Strict) | Enviado automaticamente pelo browser |
 
 ---
 
-## Schema do Banco (Prisma)
+## OTA Updates
 
-> Schema completo com todos os models, constraints e índices: ver [prisma-config.md](prisma-config.md)
+O app usa `expo-updates` para atualizacoes OTA:
+
+1. Na inicializacao, checa se ha update disponivel (timeout 10s)
+2. Se houver → mostra `UpdateModal` com opcao de atualizar ou pular
+3. Se aceitar → baixa e recarrega o app
 
 ---
 
-## Core do Estuda — Referência
+## Player
 
-O `core/` é copiado do projeto Estuda e contém as bases do DDD:
+O player usa `react-native-webview` carregando uma URL do EmbedPlay:
 
-| Arquivo | Propósito |
-|---------|-----------|
-| `either.ts` | Retorno explícito Left/Right — elimina try/catch nos use cases |
-| `entity.ts` | Classe base: ID (UniqueEntityID), props genérico, equals() |
-| `aggregate-root.ts` | Extends Entity + gerencia domainEvents[] |
-| `value-object.ts` | Classe base com equals() por JSON comparison |
-| `unique-entity-id.ts` | Wrapper UUID com equals(), toString(), toValue() |
-| `unique-code.ts` | Gerador de códigos alfanuméricos configurável |
-| `watched-list.ts` | Lista que rastreia items novos/removidos (para aggregates) |
-| `domain-event.ts` | Interface: ocurredAt + getAggregateId() |
-| `domain-events.ts` | Registry estático: register(), dispatch(), markForDispatch() |
-| `event-handler.ts` | Interface: setupSubscriptions() |
-| `use-case-error.ts` | Erro base: statusCode + errors[] tipados |
-| `not-allowed-error.ts` | Extends UseCaseError — 403 |
-| `resource-not-found-error.ts` | Extends UseCaseError — 404 fixo |
-| `unexpected-error.ts` | Extends UseCaseError — 500 |
-| `optional.ts` | Utility type: torna campos específicos opcionais |
+1. `POST /streams/start` → obtem `streamId`
+2. WebView carrega URL do EmbedPlay
+3. Ping a cada 60s (`PUT /streams/:id/ping`)
+4. Ao sair → `DELETE /streams/:id`
+5. Se ping retorna 404 → sessao encerrada (outro dispositivo), mostra overlay
+
+---
+
+## Subscription Gate
+
+Usuarios sem assinatura ativa podem navegar, mas:
+
+- Botao "Assistir" fica desabilitado (icone de cadeado)
+- Banner sobre o backdrop indica necessidade de assinar
+- Clicar no banner → navega para tela de Planos
+- Hook `useSubscription` centraliza a logica (`canWatch`, `isExpired`)
