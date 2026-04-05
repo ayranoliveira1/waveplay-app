@@ -1,58 +1,75 @@
-import { useState, useEffect, useCallback } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useCallback, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useProfile } from './useProfile'
+import {
+  getHistory,
+  addHistoryItem,
+  clearAllHistory,
+} from '../services/playback'
 import type { HistoryItem } from '../types'
 
-const HISTORY_KEY = '@streams_app:history'
-const MAX_HISTORY = 50
-
 export function useHistory() {
-  const [history, setHistory] = useState<HistoryItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { activeProfile } = useProfile()
+  const profileId = activeProfile?.id
+  const queryClient = useQueryClient()
 
-  const loadHistory = useCallback(async () => {
-    try {
-      const stored = await AsyncStorage.getItem(HISTORY_KEY)
-      setHistory(stored ? JSON.parse(stored) : [])
-    } catch {
-      // silently fail
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const { data, isLoading } = useQuery({
+    queryKey: ['history', profileId],
+    queryFn: () => getHistory(profileId!, 1, 50),
+    enabled: !!profileId,
+  })
 
-  useEffect(() => {
-    loadHistory()
-  }, [loadHistory])
-
-  const saveHistory = useCallback(async (items: HistoryItem[]) => {
-    const trimmed = items.slice(0, MAX_HISTORY)
-    await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed))
-    setHistory(trimmed)
-  }, [])
+  const history: HistoryItem[] = useMemo(
+    () =>
+      (data?.items ?? []).map((item) => ({
+        id: item.tmdbId,
+        title: item.title,
+        posterPath: item.posterPath,
+        type: item.type,
+        watchedAt: item.watchedAt,
+        lastSeason: item.season,
+        lastEpisode: item.episode,
+        progressSeconds: item.progressSeconds,
+        durationSeconds: item.durationSeconds,
+      })),
+    [data],
+  )
 
   const addToHistory = useCallback(
     async (item: HistoryItem) => {
-      const filtered = history.filter(
-        (h) => !(h.id === item.id && h.type === item.type),
-      )
-      await saveHistory([item, ...filtered])
+      if (!profileId) return
+      await addHistoryItem(profileId, {
+        tmdbId: item.id,
+        type: item.type,
+        title: item.title,
+        posterPath: item.posterPath,
+        progressSeconds: item.progressSeconds,
+        durationSeconds: item.durationSeconds,
+        season: item.lastSeason,
+        episode: item.lastEpisode,
+      })
+      queryClient.invalidateQueries({ queryKey: ['history', profileId] })
     },
-    [history, saveHistory],
+    [profileId, queryClient],
   )
 
   const removeFromHistory = useCallback(
-    async (id: number, type: 'movie' | 'series') => {
-      await saveHistory(
-        history.filter((h) => !(h.id === id && h.type === type)),
-      )
+    async (_id: number, _type: 'movie' | 'series') => {
+      // API nao tem delete individual — no-op
     },
-    [history, saveHistory],
+    [],
   )
 
   const clearHistory = useCallback(async () => {
-    await AsyncStorage.removeItem(HISTORY_KEY)
-    setHistory([])
-  }, [])
+    if (!profileId) return
+    await clearAllHistory(profileId)
+    queryClient.invalidateQueries({ queryKey: ['history', profileId] })
+  }, [profileId, queryClient])
+
+  const reload = useCallback(() => {
+    if (!profileId) return
+    queryClient.invalidateQueries({ queryKey: ['history', profileId] })
+  }, [profileId, queryClient])
 
   return {
     history,
@@ -60,6 +77,6 @@ export function useHistory() {
     addToHistory,
     removeFromHistory,
     clearHistory,
-    reload: loadHistory,
+    reload,
   }
 }

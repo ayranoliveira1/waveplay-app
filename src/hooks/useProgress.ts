@@ -1,11 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useCallback, useMemo, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useProfile } from './useProfile'
+import { saveProgress, getHistory } from '../services/playback'
 import type { ProgressEntry } from '../types'
 
-const PROGRESS_KEY = '@streams_app:progress'
-const DEBOUNCE_MS = 5000
-
 type ProgressMap = Record<string, ProgressEntry>
+
+interface PendingEntry {
+  tmdbId: number
+  type: 'movie' | 'series'
+  progressSeconds: number
+  durationSeconds: number
+  season?: number
+  episode?: number
+}
 
 function makeKey(
   id: number,
@@ -20,40 +28,40 @@ function makeKey(
 }
 
 export function useProgress() {
-  const [progressMap, setProgressMap] = useState<ProgressMap>({})
-  const [isLoading, setIsLoading] = useState(true)
-  const pendingRef = useRef<ProgressMap>({})
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { activeProfile } = useProfile()
+  const profileId = activeProfile?.id
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const stored = await AsyncStorage.getItem(PROGRESS_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          setProgressMap(parsed)
-          pendingRef.current = parsed
+  const progressMapRef = useRef<ProgressMap>({})
+  const pendingRef = useRef<PendingEntry | null>(null)
+
+  // Carregar progresso da API via history (tem progressSeconds/durationSeconds)
+  const { data, isLoading } = useQuery({
+    queryKey: ['history', profileId],
+    queryFn: () => getHistory(profileId!, 1, 50),
+    enabled: !!profileId,
+  })
+
+  // Mapa de progresso construido a partir dos items da API
+  const apiProgressMap: ProgressMap = useMemo(() => {
+    const map: ProgressMap = {}
+    for (const item of data?.items ?? []) {
+      if (item.progressSeconds != null && item.durationSeconds != null) {
+        const key = makeKey(
+          item.tmdbId,
+          item.type as 'movie' | 'series',
+          item.season,
+          item.episode,
+        )
+        map[key] = {
+          progressSeconds: item.progressSeconds,
+          durationSeconds: item.durationSeconds,
+          updatedAt: item.watchedAt,
         }
-      } catch {
-        // silently fail
-      } finally {
-        setIsLoading(false)
       }
     }
-    load()
-  }, [])
-
-  const flush = useCallback(async () => {
-    try {
-      await AsyncStorage.setItem(
-        PROGRESS_KEY,
-        JSON.stringify(pendingRef.current),
-      )
-      setProgressMap({ ...pendingRef.current })
-    } catch {
-      // silently fail
-    }
-  }, [])
+    return map
+  }, [data])
 
   const updateProgress = useCallback(
     (
@@ -65,29 +73,41 @@ export function useProgress() {
       episode?: number,
     ) => {
       const key = makeKey(id, type, season, episode)
-      pendingRef.current = {
-        ...pendingRef.current,
-        [key]: {
-          progressSeconds,
-          durationSeconds,
-          updatedAt: new Date().toISOString(),
-        },
+      progressMapRef.current[key] = {
+        progressSeconds,
+        durationSeconds,
+        updatedAt: new Date().toISOString(),
       }
-
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(flush, DEBOUNCE_MS)
+      pendingRef.current = {
+        tmdbId: id,
+        type,
+        progressSeconds,
+        durationSeconds,
+        season,
+        episode,
+      }
     },
-    [flush],
+    [],
   )
 
-  const saveNow = useCallback(async () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
+  const syncToApi = useCallback(async () => {
+    if (!profileId || !pendingRef.current) return
+    try {
+      await saveProgress(profileId, pendingRef.current)
+      queryClient.invalidateQueries({
+        queryKey: ['history', profileId],
+      })
+    } catch {
+      // silently fail — retry no proximo ciclo
     }
-    await flush()
-  }, [flush])
+  }, [profileId, queryClient])
 
+  const saveNow = useCallback(async () => {
+    await syncToApi()
+    pendingRef.current = null
+  }, [syncToApi])
+
+  // Ref (dados ao vivo durante playback) > API (dados persistidos)
   const getProgress = useCallback(
     (
       id: number,
@@ -96,46 +116,38 @@ export function useProgress() {
       episode?: number,
     ): ProgressEntry | null => {
       const key = makeKey(id, type, season, episode)
-      return pendingRef.current[key] ?? progressMap[key] ?? null
+      return progressMapRef.current[key] ?? apiProgressMap[key] ?? null
     },
-    [progressMap],
+    [apiProgressMap],
   )
 
+  // Merge API + ref (ref sobrescreve dados mais recentes)
   const getAllProgressForSeries = useCallback(
     (seriesId: number): Record<string, ProgressEntry> => {
       const prefix = `series-${seriesId}-`
       const result: Record<string, ProgressEntry> = {}
-      const source = { ...progressMap, ...pendingRef.current }
-      for (const [key, entry] of Object.entries(source)) {
+      for (const [key, entry] of Object.entries(apiProgressMap)) {
+        if (key.startsWith(prefix)) {
+          result[key] = entry
+        }
+      }
+      for (const [key, entry] of Object.entries(progressMapRef.current)) {
         if (key.startsWith(prefix)) {
           result[key] = entry
         }
       }
       return result
     },
-    [progressMap],
+    [apiProgressMap],
   )
-
-  const reload = useCallback(async () => {
-    try {
-      const stored = await AsyncStorage.getItem(PROGRESS_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setProgressMap(parsed)
-        pendingRef.current = parsed
-      }
-    } catch {
-      // silently fail
-    }
-  }, [])
 
   return {
     isLoading,
     updateProgress,
+    syncToApi,
     saveNow,
     getProgress,
     getAllProgressForSeries,
-    reload,
   }
 }
 

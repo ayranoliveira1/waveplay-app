@@ -19,7 +19,7 @@ export function PlayerScreen() {
   const insets = useSafeAreaInsets()
   const [isLoading, setIsLoading] = useState(true)
   const { addToHistory } = useHistory()
-  const { updateProgress, saveNow, getProgress } = useProgress()
+  const { updateProgress, syncToApi, saveNow, getProgress } = useProgress()
   const hasRecorded = useRef(false)
   const startTimeRef = useRef<number>(0)
   const previousProgressRef = useRef(getProgress(id, type, season, episode))
@@ -28,6 +28,33 @@ export function PlayerScreen() {
     type === 'movie'
       ? getMovieEmbedUrl(id)
       : getSeriesEmbedUrl(id, season ?? 1, episode ?? 1)
+
+  // Sync periodico de 5 minutos — backup contra crash
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (startTimeRef.current > 0) {
+        const elapsedSeconds = Math.floor(
+          (Date.now() - startTimeRef.current) / 1000,
+        )
+        const base = previousProgressRef.current?.progressSeconds ?? 0
+        const progress = Math.min(base + elapsedSeconds, runtimeSeconds)
+        addToHistory({
+          id,
+          title,
+          posterPath,
+          type,
+          watchedAt: new Date().toISOString(),
+          lastSeason: season,
+          lastEpisode: episode,
+          progressSeconds: progress,
+          durationSeconds: runtimeSeconds,
+        })
+        updateProgress(id, type, progress, runtimeSeconds, season, episode)
+        syncToApi()
+      }
+    }, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [id, type, title, posterPath, runtimeSeconds, season, episode, addToHistory, updateProgress, syncToApi])
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
