@@ -45,3 +45,20 @@ export const fontSize = {
   title: 20,
   hero: 28,
 } as const
+
+export const PROFILE_COLORS = [
+  '#7B2FBE',
+  '#E91E63',
+  '#2196F3',
+  '#4CAF50',
+  '#FF9800',
+] as const
+
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}

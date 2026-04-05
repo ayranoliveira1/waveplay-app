@@ -12,20 +12,21 @@ export type RootStackParamList = {
     season?: number
     episode?: number
   }
-  Favorites: undefined
-  History: undefined
-  Watchlist: undefined
+  Search: undefined
+  ProfileSelection: undefined
+  ProfileForm: { profileId?: string }
+  Account: undefined
 }
 
 export type AuthStackParamList = {
   Login: undefined
   Register: undefined
+  ForgotPassword: undefined
 }
 
 export type MainTabParamList = {
   Home: undefined
   Movies: undefined
   Series: undefined
-  Search: undefined
-  Settings: undefined
+  Profile: undefined
 }

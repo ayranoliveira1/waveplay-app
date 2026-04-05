@@ -22,6 +22,13 @@ export type {
   TMDBSeasonDetail,
   TMDBMultiSearchResult,
   EmbedStatus,
+  Profile,
+  CatalogItem,
+  CatalogList,
+  CatalogMovieDetail,
+  CatalogSeriesDetail,
+  CatalogSeason,
+  CatalogEpisode,
 } from './api'
 
 export type {
@@ -35,4 +42,6 @@ export type {
   ApiError,
   AuthTokens,
   UserData,
+  UserPlan,
+  UserSubscription,
 } from './api-response'

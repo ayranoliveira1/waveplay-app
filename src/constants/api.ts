@@ -1,5 +1,3 @@
-export const TMDB_ACCESS_TOKEN = process.env.EXPO_PUBLIC_TMDB_ACCESS_TOKEN!
-export const TMDB_BASE_URL = process.env.EXPO_PUBLIC_TMDB_BASE_URL!
 export const TMDB_IMAGE_BASE = process.env.EXPO_PUBLIC_TMDB_IMAGE_BASE!
 
 export const EMBED_PLAY_BASE_URL = process.env.EXPO_PUBLIC_EMBED_PLAY_BASE_URL!
