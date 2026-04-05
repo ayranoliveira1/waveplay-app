@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store'
 
-const ACCESS_TOKEN_KEY = '@waveplay:access_token'
-const REFRESH_TOKEN_KEY = '@waveplay:refresh_token'
+const ACCESS_TOKEN_KEY = 'waveplay.access_token'
+const REFRESH_TOKEN_KEY = 'waveplay.refresh_token'
 
 export async function getAccessToken(): Promise<string | null> {
   return SecureStore.getItemAsync(ACCESS_TOKEN_KEY)

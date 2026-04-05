@@ -1,11 +1,21 @@
 import React, { useState } from 'react'
-import { View, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native'
+import { View, Text, KeyboardAvoidingView, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useAuth } from '../hooks'
 import { Button } from '../components/ui'
 import { Input } from '../components/ui'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AuthStackParamList } from '../types'
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(1, 'Senha obrigatória'),
+})
+
+type LoginForm = z.infer<typeof loginSchema>
 
 interface LoginScreenProps {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>
@@ -14,23 +24,27 @@ interface LoginScreenProps {
 export function LoginScreen({ navigation }: LoginScreenProps) {
   const insets = useSafeAreaInsets()
   const { signIn } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
 
-  async function handleSignIn() {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Erro', 'Preencha todos os campos')
-      return
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
+  async function onSubmit(data: LoginForm) {
+    setApiError(null)
     setIsLoading(true)
-    const success = await signIn(email, password)
+    const result = await signIn(data.email, data.password)
     setIsLoading(false)
 
-    if (!success) {
-      Alert.alert('Erro', 'Email ou senha incorretos')
+    if (!result.success) {
+      setApiError(result.error ?? 'Erro ao fazer login')
     }
   }
 
@@ -48,37 +62,70 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
           </Text>
         </View>
 
-        <Input
-          label="Email"
-          placeholder="Digite seu email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              label="Email"
+              placeholder="Digite seu email"
+              value={value}
+              onChangeText={(text) => {
+                onChange(text)
+                if (apiError) setApiError(null)
+              }}
+              onBlur={onBlur}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              error={errors.email?.message}
+            />
+          )}
         />
 
-        <Input
-          label="Senha"
-          placeholder="Digite sua senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          rightIcon={
-            <Text className="text-sm text-accent">
-              {showPassword ? 'Ocultar' : 'Mostrar'}
-            </Text>
-          }
-          onRightIconPress={() => setShowPassword(!showPassword)}
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              label="Senha"
+              placeholder="Digite sua senha"
+              value={value}
+              onChangeText={(text) => {
+                onChange(text)
+                if (apiError) setApiError(null)
+              }}
+              onBlur={onBlur}
+              secureTextEntry={!showPassword}
+              rightIcon={
+                <Text className="text-sm text-accent">
+                  {showPassword ? 'Ocultar' : 'Mostrar'}
+                </Text>
+              }
+              onRightIconPress={() => setShowPassword(!showPassword)}
+              error={errors.password?.message}
+            />
+          )}
         />
+
+        {apiError && (
+          <Text className="mb-3 text-center text-sm text-error">{apiError}</Text>
+        )}
 
         <View className="mt-4">
           <Button
             title="Entrar"
-            onPress={handleSignIn}
+            onPress={handleSubmit(onSubmit)}
             isLoading={isLoading}
           />
         </View>
+
+        <Text
+          className="mt-4 text-center text-sm text-accent"
+          onPress={() => navigation.navigate('ForgotPassword')}
+        >
+          Esqueci minha senha
+        </Text>
 
         <View className="mt-6 flex-row items-center justify-center">
           <Text className="text-text-secondary">Não tem conta? </Text>
