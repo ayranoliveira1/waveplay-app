@@ -1,19 +1,19 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { ScrollView, View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
 import { MediaCard, Carousel, BackButton } from '../components'
-import { getMovieDetail, getSimilarMovies } from '../services/tmdb'
+import { getMovieDetail, getSimilarMovies } from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
-import type { RootStackParamList, TMDBMovie } from '../types'
+import type { RootStackParamList, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 type MovieDetailRoute = RouteProp<RootStackParamList, 'MovieDetail'>
@@ -25,20 +25,16 @@ export function MovieDetailScreen() {
   const insets = useSafeAreaInsets()
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
-  const { getProgress, reload: reloadProgress } = useProgress()
+  const { getProgress } = useProgress()
 
-  useFocusEffect(
-    useCallback(() => {
-      reloadProgress()
-    }, [reloadProgress]),
-  )
-
-  const { data: movie, isLoading, isError, refetch } = useQuery({
+  const { data: movieData, isLoading, isError, refetch } = useQuery({
     queryKey: ['movie', id],
     queryFn: () => getMovieDetail(id),
   })
 
-  const { data: similar } = useQuery({
+  const movie = movieData?.movie
+
+  const { data: similarData } = useQuery({
     queryKey: ['movie', id, 'similar'],
     queryFn: () => getSimilarMovies(id),
     enabled: !!movie,
@@ -65,8 +61,8 @@ export function MovieDetailScreen() {
 
   const isFav = isFavorite(id, 'movie')
   const inWatchlist = isInWatchlist(id, 'movie')
-  const backdropUri = movie.backdrop_path
-    ? `${TMDB_IMAGE_SIZES.backdrop.large}${movie.backdrop_path}`
+  const backdropUri = movie.backdropPath
+    ? `${TMDB_IMAGE_SIZES.backdrop.large}${movie.backdropPath}`
     : null
 
   function handleToggleFavorite() {
@@ -76,9 +72,9 @@ export function MovieDetailScreen() {
       addFavorite({
         id: movie!.id,
         title: movie!.title,
-        posterPath: movie!.poster_path,
-        backdropPath: movie!.backdrop_path,
-        rating: movie!.vote_average,
+        posterPath: movie!.posterPath,
+        backdropPath: movie!.backdropPath,
+        rating: movie!.rating,
         type: 'movie',
       })
     }
@@ -91,9 +87,9 @@ export function MovieDetailScreen() {
       addToWatchlist({
         id: movie!.id,
         title: movie!.title,
-        posterPath: movie!.poster_path,
-        backdropPath: movie!.backdrop_path,
-        rating: movie!.vote_average,
+        posterPath: movie!.posterPath,
+        backdropPath: movie!.backdropPath,
+        rating: movie!.rating,
         type: 'movie',
       })
     }
@@ -111,7 +107,7 @@ export function MovieDetailScreen() {
       id,
       type: 'movie',
       title: movie!.title,
-      posterPath: movie!.poster_path,
+      posterPath: movie!.posterPath,
       runtimeSeconds: (movie!.runtime || 120) * 60,
     })
   }
@@ -157,11 +153,11 @@ export function MovieDetailScreen() {
           <View className="mr-3 flex-row items-center">
             <Text className="text-xs text-rating">★</Text>
             <Text className="ml-1 text-sm font-bold text-white">
-              {movie.vote_average.toFixed(1)}
+              {movie.rating.toFixed(1)}
             </Text>
           </View>
           <Text className="mr-3 text-sm text-text-secondary">
-            {movie.release_date?.split('-')[0]}
+            {movie.releaseDate?.split('-')[0]}
           </Text>
           {movie.runtime > 0 && (
             <Text className="mr-3 text-sm text-text-secondary">
@@ -235,18 +231,18 @@ export function MovieDetailScreen() {
         </Text>
       </View>
 
-      {similar && similar.results.length > 0 && (
+      {similarData && similarData.results.length > 0 && (
         <View className="mt-6">
           <Carousel
             title="Filmes Similares"
-            data={similar.results.slice(0, 15)}
-            keyExtractor={(item: TMDBMovie) => `similar-${item.id}`}
-            renderItem={(item: TMDBMovie) => (
+            data={similarData.results.slice(0, 15)}
+            keyExtractor={(item: CatalogItem) => `similar-${item.id}`}
+            renderItem={(item: CatalogItem) => (
               <MediaCard
                 id={item.id}
                 title={item.title}
-                posterPath={item.poster_path}
-                rating={item.vote_average}
+                posterPath={item.posterPath}
+                rating={item.rating}
                 type="movie"
                 onPress={handleMediaPress}
               />

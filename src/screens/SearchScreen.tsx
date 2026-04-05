@@ -13,11 +13,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { BackButton } from '../components'
 import { Chip, EmptyState, ErrorState } from '../components/ui'
 import { useSearchHistory } from '../hooks'
-import { searchMulti } from '../services/tmdb'
+import { searchCatalog } from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import type { RootStackParamList, TMDBMultiSearchResult } from '../types'
+import type { RootStackParamList, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
@@ -39,7 +40,7 @@ export function SearchScreen() {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['search', debouncedQuery],
-    queryFn: () => searchMulti(debouncedQuery),
+    queryFn: () => searchCatalog(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
   })
 
@@ -55,22 +56,19 @@ export function SearchScreen() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
   }, [])
 
-  const results =
-    data?.results.filter(
-      (item) => item.media_type === 'movie' || item.media_type === 'tv',
-    ) ?? []
+  const results = data?.results ?? []
 
-  function handlePress(item: TMDBMultiSearchResult) {
-    if (item.media_type === 'movie') {
+  function handlePress(item: CatalogItem) {
+    if (item.type === 'movie') {
       navigation.navigate('MovieDetail', { id: item.id })
     } else {
       navigation.navigate('SeriesDetail', { id: item.id })
     }
   }
 
-  function renderItem({ item }: { item: TMDBMultiSearchResult }) {
-    const imageUri = item.poster_path
-      ? `${TMDB_IMAGE_SIZES.poster.small}${item.poster_path}`
+  function renderItem({ item }: { item: CatalogItem }) {
+    const imageUri = item.posterPath
+      ? `${TMDB_IMAGE_SIZES.poster.small}${item.posterPath}`
       : null
 
     return (
@@ -94,20 +92,22 @@ export function SearchScreen() {
         </View>
         <View className="flex-1 justify-center px-3 py-2">
           <Text className="text-sm font-semibold text-white" numberOfLines={2}>
-            {item.title || item.name}
+            {item.title}
           </Text>
           <Text className="mt-1 text-xs text-text-muted">
-            {item.media_type === 'movie' ? 'Filme' : 'Série'} •{' '}
-            {(item.release_date || item.first_air_date)?.split('-')[0]}
+            {item.type === 'movie' ? 'Filme' : 'Série'} •{' '}
+            {item.releaseDate?.split('-')[0]}
           </Text>
-          <Text className="mt-1 text-xs text-text-secondary" numberOfLines={2}>
-            {item.overview}
-          </Text>
-          {item.vote_average > 0 && (
+          {item.overview && (
+            <Text className="mt-1 text-xs text-text-secondary" numberOfLines={2}>
+              {item.overview}
+            </Text>
+          )}
+          {item.rating > 0 && (
             <View className="mt-1 flex-row items-center">
               <Text className="text-xs text-rating">★</Text>
               <Text className="ml-1 text-xs text-text-secondary">
-                {item.vote_average.toFixed(1)}
+                {item.rating.toFixed(1)}
               </Text>
             </View>
           )}
@@ -119,6 +119,9 @@ export function SearchScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="px-4 pb-3 pt-4">
+        <View className="mb-2">
+          <BackButton variant="inline" />
+        </View>
         <View className="flex-row items-center rounded-card bg-background-tertiary px-4">
           <Ionicons name="search" size={18} color="#5A5A72" style={{ marginRight: 12 }} />
           <TextInput
@@ -142,7 +145,7 @@ export function SearchScreen() {
         <FlatList
           data={results}
           renderItem={renderItem}
-          keyExtractor={(item) => `search-${item.id}-${item.media_type}`}
+          keyExtractor={(item) => `search-${item.id}-${item.type}`}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
         />

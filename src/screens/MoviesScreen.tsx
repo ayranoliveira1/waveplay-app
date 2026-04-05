@@ -7,26 +7,24 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { GenreChips, RatingBadge } from '../components'
+import { GenreChips, RatingBadge, ScreenHeader } from '../components'
 import { ErrorState } from '../components/ui'
 import {
   getMovieGenres,
   getPopularMovies,
   getMoviesByGenre,
-} from '../services/tmdb'
+} from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import { useResponsive } from '../hooks/useResponsive'
-import type { RootStackParamList, TMDBMovie } from '../types'
+import type { RootStackParamList, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
 export function MoviesScreen() {
   const navigation = useNavigation<NavigationProp>()
-  const insets = useSafeAreaInsets()
   const { numColumns } = useResponsive()
   const [selectedGenreId, setSelectedGenreId] = useState<number | null>(null)
 
@@ -50,15 +48,15 @@ export function MoviesScreen() {
         ? getMoviesByGenre(selectedGenreId, pageParam)
         : getPopularMovies(pageParam),
     getNextPageParam: (lastPage) =>
-      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
   })
 
   const movies = data?.pages.flatMap((page) => page.results) ?? []
 
-  function renderMovie({ item }: { item: TMDBMovie }) {
-    const imageUri = item.poster_path
-      ? `${TMDB_IMAGE_SIZES.poster.medium}${item.poster_path}`
+  function renderMovie({ item }: { item: CatalogItem }) {
+    const imageUri = item.posterPath
+      ? `${TMDB_IMAGE_SIZES.poster.medium}${item.posterPath}`
       : null
 
     return (
@@ -84,24 +82,22 @@ export function MoviesScreen() {
             </View>
           )}
           <View className="absolute right-2 top-2">
-            <RatingBadge rating={item.vote_average} />
+            <RatingBadge rating={item.rating} />
           </View>
         </View>
         <Text className="mt-2 text-sm font-medium text-white" numberOfLines={2}>
           {item.title}
         </Text>
         <Text className="text-xs text-text-muted">
-          {item.release_date?.split('-')[0]}
+          {item.releaseDate?.split('-')[0]}
         </Text>
       </Pressable>
     )
   }
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <Text className="px-4 pb-2 pt-4 text-xl font-bold text-white">
-        Filmes
-      </Text>
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Filmes" />
 
       {genres && (
         <GenreChips

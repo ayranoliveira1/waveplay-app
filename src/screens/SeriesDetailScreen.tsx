@@ -1,19 +1,19 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import { ScrollView, View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
 import { SeasonPicker, EpisodeCard, BackButton, Carousel, MediaCard } from '../components'
-import { getSeriesDetail, getSeasonDetail, getSimilarSeries } from '../services/tmdb'
+import { getSeriesDetail, getSeasonDetail, getSimilarSeries } from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
 import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
-import type { RootStackParamList, Episode, TMDBSeries } from '../types'
+import type { RootStackParamList, Episode, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 type SeriesDetailRoute = RouteProp<RootStackParamList, 'SeriesDetail'>
@@ -25,21 +25,17 @@ export function SeriesDetailScreen() {
   const insets = useSafeAreaInsets()
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
-  const { getAllProgressForSeries, getProgress, reload: reloadProgress } = useProgress()
+  const { getAllProgressForSeries, getProgress } = useProgress()
   const [selectedSeason, setSelectedSeason] = useState(1)
-
-  useFocusEffect(
-    useCallback(() => {
-      reloadProgress()
-    }, [reloadProgress]),
-  )
 
   const seriesProgress = getAllProgressForSeries(id)
 
-  const { data: series, isLoading, isError, refetch } = useQuery({
+  const { data: seriesData, isLoading, isError, refetch } = useQuery({
     queryKey: ['series', id],
     queryFn: () => getSeriesDetail(id),
   })
+
+  const series = seriesData?.series
 
   const { data: seasonDetail } = useQuery({
     queryKey: ['series', id, 'season', selectedSeason],
@@ -47,7 +43,7 @@ export function SeriesDetailScreen() {
     enabled: !!series,
   })
 
-  const { data: similar } = useQuery({
+  const { data: similarData } = useQuery({
     queryKey: ['series', id, 'similar'],
     queryFn: () => getSimilarSeries(id),
   })
@@ -73,8 +69,8 @@ export function SeriesDetailScreen() {
 
   const isFav = isFavorite(id, 'series')
   const inWatchlist = isInWatchlist(id, 'series')
-  const backdropUri = series.backdrop_path
-    ? `${TMDB_IMAGE_SIZES.backdrop.large}${series.backdrop_path}`
+  const backdropUri = series.backdropPath
+    ? `${TMDB_IMAGE_SIZES.backdrop.large}${series.backdropPath}`
     : null
 
   function handleToggleFavorite() {
@@ -84,9 +80,9 @@ export function SeriesDetailScreen() {
       addFavorite({
         id: series!.id,
         title: series!.name,
-        posterPath: series!.poster_path,
-        backdropPath: series!.backdrop_path,
-        rating: series!.vote_average,
+        posterPath: series!.posterPath,
+        backdropPath: series!.backdropPath,
+        rating: series!.rating,
         type: 'series',
       })
     }
@@ -99,9 +95,9 @@ export function SeriesDetailScreen() {
       addToWatchlist({
         id: series!.id,
         title: series!.name,
-        posterPath: series!.poster_path,
-        backdropPath: series!.backdrop_path,
-        rating: series!.vote_average,
+        posterPath: series!.posterPath,
+        backdropPath: series!.backdropPath,
+        rating: series!.rating,
         type: 'series',
       })
     }
@@ -120,7 +116,7 @@ export function SeriesDetailScreen() {
       id,
       type: 'series',
       title: series!.name,
-      posterPath: series!.poster_path,
+      posterPath: series!.posterPath,
       runtimeSeconds: (ep.runtime || 45) * 60,
       season: ep.seasonNumber,
       episode: ep.episodeNumber,
@@ -143,18 +139,7 @@ export function SeriesDetailScreen() {
       : 0
   const canContinue = lastProgress && lastPercent > 0 && lastPercent < 0.9
 
-  const episodes: Episode[] =
-    seasonDetail?.episodes.map((ep) => ({
-      id: ep.id,
-      name: ep.name,
-      overview: ep.overview,
-      episodeNumber: ep.episode_number,
-      seasonNumber: ep.season_number,
-      stillPath: ep.still_path,
-      airDate: ep.air_date,
-      runtime: ep.runtime,
-      voteAverage: ep.vote_average,
-    })) ?? []
+  const episodes: Episode[] = seasonDetail?.episodes ?? []
 
   return (
     <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
@@ -189,14 +174,14 @@ export function SeriesDetailScreen() {
           <View className="mr-3 flex-row items-center">
             <Text className="text-xs text-rating">★</Text>
             <Text className="ml-1 text-sm font-bold text-white">
-              {series.vote_average.toFixed(1)}
+              {series.rating.toFixed(1)}
             </Text>
           </View>
           <Text className="mr-3 text-sm text-text-secondary">
-            {series.first_air_date?.split('-')[0]}
+            {series.firstAirDate?.split('-')[0]}
           </Text>
           <Text className="mr-3 text-sm text-text-secondary">
-            {series.number_of_seasons} Temporada{series.number_of_seasons > 1 ? 's' : ''}
+            {series.numberOfSeasons} Temporada{series.numberOfSeasons > 1 ? 's' : ''}
           </Text>
         </View>
 
@@ -225,7 +210,7 @@ export function SeriesDetailScreen() {
                     id,
                     type: 'series',
                     title: series!.name,
-                    posterPath: series!.poster_path,
+                    posterPath: series!.posterPath,
                     runtimeSeconds: lastProgress!.durationSeconds || 45 * 60,
                     season: lastSeason!,
                     episode: lastEpisode!,
@@ -241,7 +226,7 @@ export function SeriesDetailScreen() {
                     id,
                     type: 'series',
                     title: series!.name,
-                    posterPath: series!.poster_path,
+                    posterPath: series!.posterPath,
                     runtimeSeconds: (firstEp?.runtime || 45) * 60,
                     season: selectedSeason,
                     episode: 1,
@@ -285,15 +270,7 @@ export function SeriesDetailScreen() {
         </Text>
 
         <SeasonPicker
-          seasons={series.seasons.map((s) => ({
-            id: s.id,
-            seasonNumber: s.season_number,
-            name: s.name,
-            episodeCount: s.episode_count,
-            posterPath: s.poster_path,
-            airDate: s.air_date,
-            overview: s.overview,
-          }))}
+          seasons={series.seasons.map((s) => ({ ...s, overview: '' }))}
           selectedSeason={selectedSeason}
           onSelect={setSelectedSeason}
         />
@@ -312,18 +289,18 @@ export function SeriesDetailScreen() {
         </View>
       </View>
 
-      {similar && similar.results.length > 0 && (
+      {similarData && similarData.results.length > 0 && (
         <View className="mt-6">
           <Carousel
             title="Séries Similares"
-            data={similar.results.slice(0, 15)}
-            keyExtractor={(item: TMDBSeries) => `similar-${item.id}`}
-            renderItem={(item: TMDBSeries) => (
+            data={similarData.results.slice(0, 15)}
+            keyExtractor={(item: CatalogItem) => `similar-${item.id}`}
+            renderItem={(item: CatalogItem) => (
               <MediaCard
                 id={item.id}
-                title={item.name}
-                posterPath={item.poster_path}
-                rating={item.vote_average}
+                title={item.title}
+                posterPath={item.posterPath}
+                rating={item.rating}
                 type="series"
                 onPress={handleMediaPress}
               />
