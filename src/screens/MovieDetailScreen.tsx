@@ -9,10 +9,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
-import { MediaCard, Carousel, BackButton } from '../components'
+import { MediaCard, Carousel, BackButton, SubscriptionBanner } from '../components'
 import { getMovieDetail, getSimilarMovies } from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
+import { useFavorites, useWatchlist, useProgress, useSubscription, formatTime } from '../hooks'
 import type { RootStackParamList, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
@@ -26,6 +26,7 @@ export function MovieDetailScreen() {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
   const { getProgress } = useProgress()
+  const { canWatch, isExpired } = useSubscription()
 
   const { data: movieData, isLoading, isError, refetch } = useQuery({
     queryKey: ['movie', id],
@@ -144,6 +145,7 @@ export function MovieDetailScreen() {
         <View style={{ top: insets.top + 8 }} className="absolute left-4">
           <BackButton />
         </View>
+        {!canWatch && <SubscriptionBanner isExpired={isExpired} />}
       </View>
 
       <View className="px-4">
@@ -185,11 +187,14 @@ export function MovieDetailScreen() {
           <View className="flex-1">
             <Button
               title={
-                hasProgress
-                  ? `▶ Continuar em ${formatTime(movieProgress!.progressSeconds)}`
-                  : '▶ Assistir'
+                !canWatch
+                  ? '🔒 Assistir'
+                  : hasProgress
+                    ? `▶ Continuar em ${formatTime(movieProgress!.progressSeconds)}`
+                    : '▶ Assistir'
               }
               onPress={handleWatch}
+              disabled={!canWatch}
             />
             {hasProgress && (
               <View className="mt-2 h-1 overflow-hidden rounded-full bg-background-tertiary">

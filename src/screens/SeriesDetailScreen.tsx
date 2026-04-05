@@ -9,10 +9,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, ErrorState } from '../components/ui'
-import { SeasonPicker, EpisodeCard, BackButton, Carousel, MediaCard } from '../components'
+import { SeasonPicker, EpisodeCard, BackButton, Carousel, MediaCard, SubscriptionBanner } from '../components'
 import { getSeriesDetail, getSeasonDetail, getSimilarSeries } from '../services/catalog'
 import { TMDB_IMAGE_SIZES } from '../constants/api'
-import { useFavorites, useWatchlist, useProgress, formatTime } from '../hooks'
+import { useFavorites, useWatchlist, useProgress, useSubscription, formatTime } from '../hooks'
 import type { RootStackParamList, Episode, CatalogItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
@@ -26,6 +26,7 @@ export function SeriesDetailScreen() {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
   const { getAllProgressForSeries, getProgress } = useProgress()
+  const { canWatch, isExpired } = useSubscription()
   const [selectedSeason, setSelectedSeason] = useState(1)
 
   const seriesProgress = getAllProgressForSeries(id)
@@ -112,6 +113,7 @@ export function SeriesDetailScreen() {
   }
 
   function handleEpisodePress(ep: Episode) {
+    if (!canWatch) return
     navigation.navigate('Player', {
       id,
       type: 'series',
@@ -165,6 +167,7 @@ export function SeriesDetailScreen() {
         <View style={{ top: insets.top + 8 }} className="absolute left-4">
           <BackButton />
         </View>
+        {!canWatch && <SubscriptionBanner isExpired={isExpired} />}
       </View>
 
       <View className="px-4">
@@ -202,7 +205,13 @@ export function SeriesDetailScreen() {
 
         <View className="mt-4 flex-row gap-3">
           <View className="flex-1">
-            {canContinue ? (
+            {!canWatch ? (
+              <Button
+                title="🔒 Assistir"
+                onPress={() => {}}
+                disabled
+              />
+            ) : canContinue ? (
               <Button
                 title={`▶ Continuar T${lastSeason} E${lastEpisode} - ${formatTime(lastProgress!.progressSeconds)}`}
                 onPress={() => {
