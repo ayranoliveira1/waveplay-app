@@ -7,9 +7,9 @@ import { StatusBar } from 'expo-status-bar'
 import * as Updates from 'expo-updates'
 import { AuthNavigator } from './AuthNavigator'
 import { MainNavigator } from './MainNavigator'
-import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, FavoritesScreen, HistoryScreen, WatchlistScreen } from '../screens'
+import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, SearchScreen, ProfileSelectionScreen, ProfileFormScreen, AccountScreen } from '../screens'
 import { UpdateModal } from '../components/ui'
-import { useAuth } from '../hooks'
+import { useAuth, useProfile } from '../hooks'
 import type { RootStackParamList } from '../types'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -25,6 +25,7 @@ function LoadingScreen() {
 
 export function AppNavigator() {
   const { isAuthenticated, isLoading } = useAuth()
+  const { activeProfile, isLoading: profileLoading } = useProfile()
   const insets = useSafeAreaInsets()
   const [showSplash, setShowSplash] = useState(true)
 
@@ -121,7 +122,7 @@ export function AppNavigator() {
 
       {showSplash ? (
         <SplashScreen onFinish={handleSplashFinish} />
-      ) : isLoading ? (
+      ) : isLoading || (isAuthenticated && profileLoading) ? (
         <LoadingScreen />
       ) : (
         <NavigationContainer theme={navigationTheme}>
@@ -134,12 +135,23 @@ export function AppNavigator() {
                 animation: 'slide_from_right',
               }}
             >
-              <Stack.Screen name="Main" component={MainNavigator} />
+              {!activeProfile ? (
+                <>
+                  <Stack.Screen name="ProfileSelection" component={ProfileSelectionScreen} />
+                  <Stack.Screen name="ProfileForm" component={ProfileFormScreen} />
+                  <Stack.Screen name="Main" component={MainNavigator} />
+                </>
+              ) : (
+                <>
+                  <Stack.Screen name="Main" component={MainNavigator} />
+                  <Stack.Screen name="ProfileSelection" component={ProfileSelectionScreen} />
+                  <Stack.Screen name="ProfileForm" component={ProfileFormScreen} />
+                </>
+              )}
               <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
               <Stack.Screen name="SeriesDetail" component={SeriesDetailScreen} />
-              <Stack.Screen name="Favorites" component={FavoritesScreen} />
-              <Stack.Screen name="History" component={HistoryScreen} />
-              <Stack.Screen name="Watchlist" component={WatchlistScreen} />
+              <Stack.Screen name="Search" component={SearchScreen} />
+              <Stack.Screen name="Account" component={AccountScreen} />
               <Stack.Screen
                 name="Player"
                 component={PlayerScreen}
