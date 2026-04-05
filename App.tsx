@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as SystemUI from 'expo-system-ui'
 
 import { AuthProvider } from './src/contexts/AuthContext'
+import { ProfileProvider } from './src/contexts/ProfileContext'
 import { AppNavigator } from './src/navigation'
 
 SystemUI.setBackgroundColorAsync('#0A0A0F')
@@ -26,7 +27,9 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
           <AuthProvider>
-            <AppNavigator />
+            <ProfileProvider>
+              <AppNavigator />
+            </ProfileProvider>
           </AuthProvider>
         </View>
       </QueryClientProvider>
