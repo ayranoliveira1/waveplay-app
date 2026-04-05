@@ -210,3 +210,15 @@ export interface StreamConflictError {
   maxStreams: number
   activeStreams: ActiveStreamInfo[]
 }
+
+// Plan types
+
+export interface Plan {
+  id: string
+  name: string
+  slug: string
+  priceCents: number
+  maxProfiles: number
+  maxStreams: number
+  description: string
+}

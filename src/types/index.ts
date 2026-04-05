@@ -31,6 +31,7 @@ export type {
   CatalogEpisode,
   ActiveStreamInfo,
   StreamConflictError,
+  Plan,
 } from './api'
 
 export type {
