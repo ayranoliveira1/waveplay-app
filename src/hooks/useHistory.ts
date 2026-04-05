@@ -19,21 +19,30 @@ export function useHistory() {
     enabled: !!profileId,
   })
 
-  const history: HistoryItem[] = useMemo(
-    () =>
-      (data?.items ?? []).map((item) => ({
-        id: item.tmdbId,
-        title: item.title,
-        posterPath: item.posterPath,
-        type: item.type,
-        watchedAt: item.watchedAt,
-        lastSeason: item.season,
-        lastEpisode: item.episode,
-        progressSeconds: item.progressSeconds,
-        durationSeconds: item.durationSeconds,
-      })),
-    [data],
-  )
+  const history: HistoryItem[] = useMemo(() => {
+    const items = (data?.items ?? []).map((item) => ({
+      id: item.tmdbId,
+      title: item.title,
+      posterPath: item.posterPath,
+      type: item.type,
+      watchedAt: item.watchedAt,
+      lastSeason: item.season,
+      lastEpisode: item.episode,
+      progressSeconds: item.progressSeconds,
+      durationSeconds: item.durationSeconds,
+    }))
+
+    const seen = new Map<string, HistoryItem>()
+    for (const item of items) {
+      const key = `${item.id}-${item.type}`
+      const existing = seen.get(key)
+      if (!existing || item.watchedAt > existing.watchedAt) {
+        seen.set(key, item)
+      }
+    }
+
+    return Array.from(seen.values())
+  }, [data])
 
   const addToHistory = useCallback(
     async (item: HistoryItem) => {

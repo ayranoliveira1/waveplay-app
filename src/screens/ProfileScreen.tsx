@@ -296,7 +296,7 @@ export function ProfileScreen() {
             <Carousel
               title="Continuar Assistindo"
               data={continueWatching.slice(0, 10)}
-              keyExtractor={(item: HistoryItem) => `history-${item.id}-${item.type}`}
+              keyExtractor={(item: HistoryItem) => `history-${item.id}-${item.type}-${item.lastSeason ?? 0}-${item.lastEpisode ?? 0}`}
               renderItem={(item: HistoryItem) => (
                 <ContinueWatchingCard item={item} onPress={handleMediaPress} />
               )}
