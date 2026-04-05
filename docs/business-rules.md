@@ -1,4 +1,4 @@
-# WavePlay API — Regras de Negócio
+# WavePlay — Regras de Negócio (Backend + Mobile)
 
 ---
 
@@ -20,6 +20,42 @@
 | Básico | basico | 1 | 1 | R$ 0 (free) |
 | Padrão | padrao | 3 | 2 | R$ 19,90 |
 | Premium | premium | 5 | 4 | R$ 39,90 |
+
+---
+
+## 1.1. Subscription Gate (Bloqueio no App)
+
+### Contexto: Verificacao de assinatura no app mobile
+
+| Regra | Descrição |
+|-------|-----------|
+| Navegacao livre | Usuario sem assinatura pode navegar pelo catalogo normalmente |
+| Bloqueio no detalhe | Telas de MovieDetail e SeriesDetail bloqueiam o botao "Assistir" |
+| Banner sobre backdrop | Banner clicavel sobre a imagem principal indica necessidade de assinar |
+| Clique no banner | Navega direto para a tela de Planos |
+| Episodios bloqueados | Em series, clicar no episodio nao navega ao Player |
+
+### Condicoes de bloqueio
+
+| Condicao | Descricao |
+|----------|-----------|
+| `user.subscription === null` | Usuario sem assinatura |
+| `subscription.endsAt !== null && endsAt < now` | Assinatura vencida |
+| `subscription.endsAt === null` | Sem expiracao (assinatura valida) |
+
+### Mensagens do banner
+
+| Estado | Mensagem |
+|--------|----------|
+| Sem assinatura | "Assine um plano para assistir" |
+| Assinatura vencida | "Sua assinatura expirou. Renove para continuar assistindo" |
+
+### Hook `useSubscription`
+
+```
+canWatch = subscription !== null && !isExpired
+isExpired = subscription.endsAt !== null && new Date(endsAt) < new Date()
+```
 
 ---
 
@@ -99,7 +135,7 @@ Web (padrão, sem header):
 | Regra | Descrição |
 |-------|-----------|
 | Limite por plano | `COUNT(active_streams WHERE lastPing > 2min atrás) < user.plan.maxStreams` |
-| Heartbeat obrigatório | Player envia ping a cada 30 segundos |
+| Heartbeat obrigatório | Player envia ping a cada 60 segundos |
 | Timeout de 2 minutos | Stream sem ping há 2 minutos é considerada inativa |
 | Uma stream por perfil | Cada perfil só pode ter 1 reprodução ativa (`@@unique([userId, profileId])`) |
 | Limpeza automática | Cron job remove streams com lastPing > 2 minutos |
@@ -107,20 +143,33 @@ Web (padrão, sem header):
 ### Fluxo de reprodução
 
 ```
-1. App chama POST /streams/start { profileId, tmdbId, type }
+1. App chama POST /streams/start { profileId, tmdbId, type, title }
 2. Backend conta streams ativas do user (lastPing > 2min atrás)
-3. Se count >= plan.maxStreams → 403 "Limite de telas atingido"
+3. Se count >= plan.maxStreams → 409 com lista de streams ativas
 4. Se ok → cria/atualiza ActiveStream → retorna streamId
-5. Player chama PUT /streams/:id/ping a cada 30s
+5. Player chama PUT /streams/:id/ping a cada 60s
 6. Ao sair do player → DELETE /streams/:id
 7. Se app crashar → stream expira sozinha após 2min sem ping
+8. Se ping retorna 404 → sessão foi encerrada por outro dispositivo
 ```
 
-### Quando o limite é atingido
+### Quando o limite é atingido (409 Conflict)
 
 ```
-App mostra: "Você atingiu o limite de X telas simultâneas do seu plano.
-             Pare uma reprodução em outro dispositivo ou faça upgrade."
+App mostra modal com lista de streams ativas:
+  "Você atingiu o limite de X telas simultâneas"
+  [Stream 1 - titulo] [Encerrar]
+  [Stream 2 - titulo] [Encerrar]
+
+Ao encerrar uma stream → retry automático do start
+```
+
+### Sessão encerrada (404 no ping)
+
+```
+App mostra overlay fullscreen:
+  "Sua sessão foi encerrada em outro dispositivo"
+  [Voltar] → navigation.goBack()
 ```
 
 ---
@@ -239,7 +288,7 @@ App mostra: "Você atingiu o limite de X telas simultâneas do seu plano.
 
 | Plataforma | Access Token | Refresh Token |
 |------------|-------------|---------------|
-| Mobile (React Native) | Memória (state/context) | `expo-secure-store` (Keychain/Keystore) |
+| Mobile (React Native) | `expo-secure-store` (Keychain/Keystore) | `expo-secure-store` (Keychain/Keystore) |
 | Web (Browser) | Memória (variável JS, nunca localStorage) | httpOnly cookie (Secure, SameSite=Strict) |
 
 ### Audit Logging

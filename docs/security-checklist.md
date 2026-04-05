@@ -1,7 +1,8 @@
-# WavePlay API — Checklist de Seguranca
+# WavePlay — Checklist de Seguranca (Backend + Mobile)
 
 > Catalogo completo de vulnerabilidades para consulta durante a implementacao de cada task.
-> Para cada vulnerabilidade: descricao, como prevenir no contexto WavePlay (NestJS + Prisma + Redis), e severidade.
+> Secoes 1-18: Backend (NestJS + Prisma + Redis). Secao 19: Mobile (React Native + Expo).
+> Para cada vulnerabilidade: descricao, como prevenir no contexto WavePlay, e severidade.
 
 ---
 
@@ -32,7 +33,7 @@
 | 2.2 | **Credential Stuffing** | Uso de credenciais vazadas de outros servicos | Account lockout + rate limiting. Considerar deteccao de login de novo dispositivo/IP (futuro) | Alta |
 | 2.3 | **Password Spraying** | Testar senhas comuns contra muitos usuarios | Rate limiting global por IP. Account lockout por usuario | Alta |
 | 2.4 | **Session Fixation** | Atacante fixa um session ID antes do login da vitima | Nao usamos sessions (JWT stateless). Refresh tokens sao gerados no servidor, nunca aceitar token do cliente como novo | Alta |
-| 2.5 | **Session Hijacking** | Roubo de token de sessao via XSS, MITM, etc | Access token em memoria (web), secure-store (mobile). Refresh token em httpOnly cookie (web). HTTPS obrigatorio. Short TTL no access token (15min) | Critica |
+| 2.5 | **Session Hijacking** | Roubo de token de sessao via XSS, MITM, etc | Mobile: ambos tokens em expo-secure-store (Keychain/Keystore). Web: access token em memoria, refresh token em httpOnly cookie. HTTPS obrigatorio. Short TTL no access token (15min) | Critica |
 | 2.6 | **Weak Password Policy** | Senhas fracas permitidas | Validar no RegisterUseCase: minimo 8 caracteres, pelo menos 1 maiuscula, 1 minuscula, 1 numero. Zod schema no controller | Media |
 | 2.7 | **Default Credentials** | Credenciais padrao nao alteradas em servicos | Nao criar usuarios admin default no seed. Redis e PostgreSQL devem ter senha configurada no .env | Alta |
 | 2.8 | **Missing MFA** | Falta de autenticacao multi-fator | Nao implementado na v1. Documentar como melhoria futura | Media |
@@ -287,7 +288,27 @@
 
 ---
 
-## 19. Checklist por Task
+## 19. Seguranca Mobile (React Native / Expo)
+
+| # | Vulnerabilidade | Descricao | Prevencao no WavePlay Mobile | Severidade |
+|---|-----------------|-----------|------------------------------|------------|
+| 19.1 | **Token em AsyncStorage** | AsyncStorage nao e criptografado, tokens podem ser extraidos com root/jailbreak | Ambos os tokens (access e refresh) em `expo-secure-store` (Keychain iOS / Keystore Android). Nunca usar AsyncStorage para tokens. Na web: access token em memoria, refresh token em httpOnly cookie | Critica |
+| 19.2 | **Token em memoria apos logout** | Access token permanece na variavel apos logout | `clearTokens()` zera tanto o access token na memoria quanto o refresh token no SecureStore. `setOnUnauthorized()` chama `signOut()` automaticamente | Alta |
+| 19.3 | **Deep Link Hijacking** | App malicioso registra o mesmo scheme e intercepta tokens | Nao usamos deep links com tokens na v1. Se implementar OAuth: usar Universal Links (iOS) / App Links (Android) com verificacao de dominio | Alta |
+| 19.4 | **WebView JavaScript Injection** | Codigo malicioso injetado na WebView do player | WebView carrega apenas URL fixa do EmbedPlay (dominio controlado). `injectedJavaScript` usado apenas para comunicacao player → app. Nao permitir navegacao para outros dominios | Alta |
+| 19.5 | **Certificate Pinning ausente** | MITM com certificado falso pode interceptar trafego | Nao implementado na v1. Para producao: considerar `expo-certificate-transparency` ou pinning via config plugin | Media |
+| 19.6 | **Debuggable em producao** | App com debugger habilitado permite inspecao de trafego e memoria | Build de producao via EAS desabilita automaticamente. Verificar que `__DEV__` nao expoe funcionalidades extras | Media |
+| 19.7 | **Dados sensiveis em screenshots** | SO captura screenshot da tela (multitasking) com dados sensiveis | Nao implementado proteção na v1. Para dados sensiveis (conta, tokens): considerar `react-native-screens` `secureView` | Baixa |
+| 19.8 | **Clipboard com dados sensiveis** | Senha ou token copiado para clipboard fica acessivel a outros apps | Campos de senha usam `secureTextEntry`. Nao oferecemos "copiar token" na UI | Baixa |
+| 19.9 | **Env vars expostas no bundle** | `EXPO_PUBLIC_*` sao incluidas no bundle JS e podem ser extraidas | Apenas URLs publicas no bundle (API base URL, TMDB image CDN, EmbedPlay URL). Token TMDB e JWT secret ficam apenas no backend | Alta |
+| 19.10 | **Falta de validacao de resposta da API** | App confia cegamente na estrutura da resposta | Todas as respostas tipadas via `ApiResponse<T>`. Verificar `response.success` antes de acessar `data`. React Query trata erros com `isError` | Media |
+| 19.11 | **Rate limiting no client** | App sem controle pode fazer requests excessivos | React Query com `staleTime` e `gcTime` evita refetch desnecessario. Debounce na busca. Stream ping com intervalo fixo de 60s | Baixa |
+| 19.12 | **Interceptor de refresh race condition** | Multiplos requests 401 simultaneos tentam refresh em paralelo | `refreshPromise` singleton em `api.ts` — se ja ha um refresh em andamento, requests subsequentes aguardam o mesmo Promise | Alta |
+| 19.13 | **OTA update malicioso** | Update OTA com codigo malicioso injetado | Expo Updates usa assinatura criptografica. Updates so sao aceitos se assinados com a chave do projeto. Verificar integridade no EAS | Alta |
+
+---
+
+## 20. Checklist por Task
 
 Tabela de referencia rapida: quais categorias de vulnerabilidade verificar em cada task.
 
@@ -312,4 +333,4 @@ Tabela de referencia rapida: quais categorias de vulnerabilidade verificar em ca
 
 ---
 
-> **Como usar**: Antes de implementar cada task, consultar a tabela da secao 19 para saber quais categorias priorizar. Ao finalizar, verificar cada item da categoria correspondente.
+> **Como usar**: Antes de implementar cada task, consultar a tabela da secao 20 para saber quais categorias priorizar. Para tasks do app mobile, verificar também a secao 19 (Seguranca Mobile). Ao finalizar, verificar cada item da categoria correspondente.
