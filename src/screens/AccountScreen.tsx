@@ -1,11 +1,13 @@
 import React from 'react'
-import { View, Text, ActivityIndicator, ScrollView } from 'react-native'
+import { View, Text, ActivityIndicator, ScrollView, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
+import type { NavigationProp } from '@react-navigation/native'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { BackButton } from '../components'
 import { api } from '../services/api'
-import type { UserData } from '../types'
+import type { UserData, RootStackParamList } from '../types'
 
 function InfoCard({
   icon,
@@ -34,6 +36,7 @@ function InfoCard({
 
 export function AccountScreen() {
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['account'],
@@ -154,6 +157,24 @@ export function AccountScreen() {
             </Text>
           </View>
         )}
+
+        <Pressable
+          onPress={() => navigation.navigate('Plans')}
+          className="mt-2 flex-row items-center justify-between rounded-card bg-background-secondary px-4 py-3"
+        >
+          <View className="flex-row items-center">
+            <Ionicons
+              name="layers-outline"
+              size={18}
+              color="#A0A0B8"
+              style={{ marginRight: 12 }}
+            />
+            <Text className="text-sm font-medium text-white">
+              Ver planos disponíveis
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="#5A5A72" />
+        </Pressable>
       </View>
     </ScrollView>
   )
