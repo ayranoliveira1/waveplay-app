@@ -482,7 +482,7 @@ Lista perfis do usuário autenticado.
 
 ### POST /streams/start
 
-Registra início de reprodução. Valida limite de telas do plano.
+Registra início de reprodução. Valida limite de telas do plano. Se o mesmo perfil já tiver uma stream ativa, faz upsert (substitui a existente).
 
 **Body:**
 
@@ -490,7 +490,8 @@ Registra início de reprodução. Valida limite de telas do plano.
 {
   "profileId": "uuid",
   "tmdbId": 550,
-  "type": "movie"
+  "type": "movie",
+  "title": "Clube da Luta"
 }
 ```
 
@@ -506,17 +507,40 @@ Registra início de reprodução. Valida limite de telas do plano.
 }
 ```
 
+**Response 409 (limite de telas atingido):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "statusCode": 409,
+    "code": "MAX_STREAMS_REACHED",
+    "message": "Limite de telas atingido",
+    "maxStreams": 1,
+    "activeStreams": [
+      {
+        "streamId": "uuid",
+        "profileName": "João",
+        "title": "Breaking Bad",
+        "type": "series",
+        "startedAt": "2024-01-15T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
 **Erros:**
 
 | Status | Mensagem |
 |--------|----------|
-| 403 | "Limite de telas simultâneas atingido. Seu plano permite X tela(s)" |
+| 409 | `MAX_STREAMS_REACHED` — retorna lista de streams ativas (formato acima) |
 
 ---
 
 ### PUT /streams/:id/ping
 
-Heartbeat enviado pelo player a cada 30 segundos.
+Heartbeat enviado pelo player a cada 60 segundos. Retorna 404 se a stream não existir mais (encerrada por outro dispositivo ou expirada por timeout).
 
 **Response 200:**
 
@@ -528,11 +552,17 @@ Heartbeat enviado pelo player a cada 30 segundos.
 }
 ```
 
+**Erros:**
+
+| Status | Mensagem |
+|--------|----------|
+| 404 | Stream não encontrada (encerrada ou expirada) |
+
 ---
 
 ### DELETE /streams/:id
 
-Player encerrado.
+Encerra uma stream. Usado ao sair do player ou para liberar slot no modal de conflito.
 
 **Response 200:**
 
@@ -1021,5 +1051,6 @@ Limpa todo o histórico do perfil.
 | 401 | Não autenticado (token inválido/expirado) |
 | 403 | Sem permissão (limite atingido, ação não permitida) |
 | 404 | Recurso não encontrado |
+| 409 | Conflito (ex: limite de streams atingido) |
 | 429 | Rate limit excedido |
 | 500 | Erro interno |
