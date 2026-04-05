@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -L --max-time 15 \"https://superflixapi.rest/serie/94997/5/1\")",
+      "Bash(curl -s -L --max-time 15 -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" -H \"Referer: https://cdn-embed.com/\" \"https://cdn-embed.com/filme/912649\")",
+      "Bash(curl -s -L --max-time 15 -D - -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/\")",
+      "Bash(curl -s -L --max-time 15 -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/filme/1184918\")",
+      "Bash(curl -s -L --max-time 15 -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/serie/94997/5/1\")",
+      "Bash(curl -s -L --max-time 15 -w \"\\\\n\\\\n--- HTTP Status: %{http_code} | Size: %{size_download} bytes ---\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/filme/1184918\")",
+      "Bash(curl -s -L --max-time 15 -w \"\\\\n\\\\n--- HTTP Status: %{http_code} | Size: %{size_download} bytes ---\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/serie/94997/5/1\")",
+      "Bash(curl -s -L --max-time 15 -w \"\\\\n\\\\n--- HTTP Status: %{http_code} | Size: %{size_download} bytes ---\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://cdn-embed.com/filme/550\")",
+      "Bash(curl -s -L --max-time 15 -w \"\\\\n\\\\n--- HTTP Status: %{http_code} | Size: %{size_download} bytes ---\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://superflixapi.rest/filme/550\")",
+      "WebFetch(domain:superflixapi.rest)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(find /d/projetos/streams-tests -name \"package.json\" -not -path \"*/node_modules/*\" -exec cat {} \\\\;)",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Read(///wsl.localhost/Ubuntu/home/ayran/**)",
+      "Read(///wsl.localhost/Ubuntu/root/projects/**)",
+      "Bash(wsl -d Ubuntu -- ls /root/projects/estuda/)",
+      "Bash(wsl.exe -d Ubuntu -e ls /root/projects/estuda/)",
+      "Bash(cmd.exe /c \"wsl -d Ubuntu ls /root/projects/estuda/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -- find /root/projects/estuda/src -type f -name '*.ts' | head -60\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u root -- find /root/projects/estuda/src -type f -name '*.ts' | head -60\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u root -- ls -la /root/projects/estuda/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u root -- find / -maxdepth 4 -name 'estuda' -type d 2>/dev/null\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u root -- find / -maxdepth 4 -name estuda -type d\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- ls /home/ayran/projects/estuda/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- find /home/ayran/projects/estuda/packages -type f -name '*.ts' | head -80\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- ls /home/ayran/projects/estuda/apps/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- find /home/ayran/projects/estuda/apps/api/src -type f -name '*.ts' | sort\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- ls /home/ayran/projects/estuda/apps/api/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- find /home/ayran/projects/estuda/apps/api/src -type f \\\\\\( -name '*.ts' -o -name '*.tsx' \\\\\\) | sort\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- find /home/ayran/projects/estuda/apps/api/src -type f -name '*.ts'\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- ls -R /home/ayran/projects/estuda/apps/api/src/\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/entity.ts\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/aggregate-root.ts\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/unique-entity-id.ts\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/unique-code.ts\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/value-object.ts\")",
+      "Bash(powershell.exe -Command \"wsl -d Ubuntu -u ayran -- cat /home/ayran/projects/estuda/apps/api/src/core/entities/watched-list.ts\")"
+    ]
+  }
+}

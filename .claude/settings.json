@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/domain/application/repositories/users-repository.ts\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/domain/application/cryptography/encrypter.ts\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/domain/application/cryptography/hash-comparer.ts\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/domain/identity/application/repositories/students-repository.ts\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src -path '*repository*' -name '*.ts' | head -10\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src -path '*repositories*' -name '*.ts' -not -path '*prisma*' -not -path '*test*' | head -15\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src -name '*repository*' -name '*.ts' | head -15\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src -name '*repository*' 2>/dev/null\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/domain/application/cryptography/hash-generator.ts\")",
+      "Bash(powershell.exe -Command \"wsl ls -la /home/ayran/projects/estuda/apps/api/src/infra/database/prisma/mappers/ 2>/dev/null | head -30\")",
+      "Bash(wsl ls:*)",
+      "Read(//mnt/**)",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src/infra -name '*mapper*' -o -name '*hasher*' -o -name '*encrypter*' -o -name '*cryptography*' -type d\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src/infra/database/prisma/mappers -name '*.ts'\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/infra/database/prisma/mappers/prisma-users-mapper.ts\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/infra/database/prisma/repositories/prisma-users-repository.ts\")",
+      "Bash(powershell.exe -Command \"wsl cat /home/ayran/projects/estuda/apps/api/src/infra/cryptography/bcrypt-hasher.ts\")",
+      "Bash(powershell.exe -Command \"wsl find /home/ayran/projects/estuda/apps/api/src/infra/cryptography -name '*.ts'\")"
+    ]
+  }
+}
