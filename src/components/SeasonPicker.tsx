@@ -21,7 +21,7 @@ export function SeasonPicker({
   if (filtered.length === 0) return null
 
   return (
-    <View className="mb-4 px-4">
+    <View>
       <Pressable
         onPress={() => setOpen(true)}
         className="flex-row items-center self-start rounded-chip bg-background-tertiary px-4 py-2.5"

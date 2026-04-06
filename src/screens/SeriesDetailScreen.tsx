@@ -3,7 +3,7 @@ import { ScrollView, View, Text, ActivityIndicator, Pressable } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RouteProp } from '@react-navigation/native'
@@ -66,6 +66,7 @@ export function SeriesDetailScreen() {
     queryKey: ['series', id, 'season', selectedSeason],
     queryFn: () => getSeasonDetail(id, selectedSeason),
     enabled: !!series,
+    placeholderData: keepPreviousData,
   })
 
   const { data: similarData } = useQuery({
@@ -282,15 +283,17 @@ export function SeriesDetailScreen() {
       </View>
 
       <View className="mt-6">
-        <Text className="mb-3 px-4 text-lg font-bold text-white">
-          Episódios
-        </Text>
+        <View className="mb-3 flex-row items-center justify-between px-4">
+          <Text className="text-lg font-bold text-white">
+            Episódios
+          </Text>
 
-        <SeasonPicker
-          seasons={series.seasons.map((s) => ({ ...s, overview: '' }))}
-          selectedSeason={selectedSeason}
-          onSelect={setSelectedSeason}
-        />
+          <SeasonPicker
+            seasons={series.seasons.map((s) => ({ ...s, overview: '' }))}
+            selectedSeason={selectedSeason}
+            onSelect={setSelectedSeason}
+          />
+        </View>
 
         <View className="px-4">
           {episodes.map((ep) => (
