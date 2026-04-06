@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ScrollView, View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
@@ -28,8 +28,32 @@ export function SeriesDetailScreen() {
   const { getAllProgressForSeries, getProgress } = useProgress()
   const { canWatch, isExpired } = useSubscription()
   const [selectedSeason, setSelectedSeason] = useState(1)
+  const [hasSetInitialSeason, setHasSetInitialSeason] = useState(false)
 
   const seriesProgress = getAllProgressForSeries(id)
+
+  // Find last watched episode (must be before early returns for hook order)
+  const lastWatchedKey = Object.keys(seriesProgress).sort(
+    (a, b) =>
+      new Date(seriesProgress[b].updatedAt).getTime() -
+      new Date(seriesProgress[a].updatedAt).getTime(),
+  )[0]
+  const lastWatchedMatch = lastWatchedKey?.match(/series-\d+-(\d+)-(\d+)/)
+  const lastSeason = lastWatchedMatch ? Number(lastWatchedMatch[1]) : null
+  const lastEpisode = lastWatchedMatch ? Number(lastWatchedMatch[2]) : null
+  const lastProgress = lastWatchedKey ? seriesProgress[lastWatchedKey] : null
+  const lastPercent =
+    lastProgress && lastProgress.durationSeconds > 0
+      ? lastProgress.progressSeconds / lastProgress.durationSeconds
+      : 0
+  const canContinue = lastProgress && lastPercent > 0 && lastPercent < 0.9
+
+  useEffect(() => {
+    if (!hasSetInitialSeason && lastSeason != null) {
+      setSelectedSeason(lastSeason)
+      setHasSetInitialSeason(true)
+    }
+  }, [lastSeason, hasSetInitialSeason])
 
   const { data: seriesData, isLoading, isError, refetch } = useQuery({
     queryKey: ['series', id],
@@ -124,22 +148,6 @@ export function SeriesDetailScreen() {
       episode: ep.episodeNumber,
     })
   }
-
-  // Find last watched episode for continue button
-  const lastWatchedKey = Object.keys(seriesProgress).sort(
-    (a, b) =>
-      new Date(seriesProgress[b].updatedAt).getTime() -
-      new Date(seriesProgress[a].updatedAt).getTime(),
-  )[0]
-  const lastWatchedMatch = lastWatchedKey?.match(/series-\d+-(\d+)-(\d+)/)
-  const lastSeason = lastWatchedMatch ? Number(lastWatchedMatch[1]) : null
-  const lastEpisode = lastWatchedMatch ? Number(lastWatchedMatch[2]) : null
-  const lastProgress = lastWatchedKey ? seriesProgress[lastWatchedKey] : null
-  const lastPercent =
-    lastProgress && lastProgress.durationSeconds > 0
-      ? lastProgress.progressSeconds / lastProgress.durationSeconds
-      : 0
-  const canContinue = lastProgress && lastPercent > 0 && lastPercent < 0.9
 
   const episodes: Episode[] = seasonDetail?.episodes ?? []
 

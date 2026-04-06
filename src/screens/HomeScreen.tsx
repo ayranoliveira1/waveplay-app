@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ScrollView, ActivityIndicator, View, RefreshControl } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -22,11 +22,28 @@ export function HomeScreen() {
 
   const { history, reload: reloadHistory } = useHistory()
 
-  const continueWatching = history.filter(
-    (h) =>
-      h.progressSeconds &&
-      h.durationSeconds &&
-      h.progressSeconds / h.durationSeconds < 0.9,
+  const continueWatching = useMemo(
+    () =>
+      history
+        .map((h) => {
+          if (!h.progressSeconds || !h.durationSeconds) return null
+          const percent = h.progressSeconds / h.durationSeconds
+
+          if (percent < 0.9) return h
+
+          if (h.type === 'series' && h.lastEpisode != null) {
+            return {
+              ...h,
+              lastEpisode: h.lastEpisode + 1,
+              progressSeconds: 0,
+              durationSeconds: 0,
+            }
+          }
+
+          return null
+        })
+        .filter((h): h is HistoryItem => h !== null),
+    [history],
   )
 
   useFocusEffect(
