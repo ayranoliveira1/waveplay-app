@@ -55,7 +55,9 @@ async function refreshTokens(): Promise<boolean> {
   })()
 
   const result = await refreshPromise
-  refreshPromise = null
+  setTimeout(() => {
+    refreshPromise = null
+  }, 1000)
   return result
 }
 
