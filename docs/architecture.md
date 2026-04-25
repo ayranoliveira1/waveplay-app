@@ -261,13 +261,23 @@ Em caso de erro:
 
 ---
 
-## OTA Updates
+## App Update Check
 
-O app usa `expo-updates` para atualizacoes OTA:
+O app consulta o backend a cada inicio para saber se ha versao mais nova:
 
-1. Na inicializacao, checa se ha update disponivel (timeout 10s)
-2. Se houver → mostra `UpdateModal` com opcao de atualizar ou pular
-3. Se aceitar → baixa e recarrega o app
+1. Hook `useAppVersionCheck` faz `GET /app/version` (timeout 10s)
+2. Compara `Application.nativeApplicationVersion` com `version` do server (semver via lib `semver`)
+3. Se ha versao maior:
+   - Mostra `UpdateModal` com `releaseNotes`
+   - Botao "Atualizar agora" abre `downloadUrl` no browser via `Linking.openURL`
+   - Usuario baixa APK e instala manualmente (Android sideload)
+   - Se `forceUpdate: true`, modal nao pode ser fechado
+4. Em DEV (`__DEV__`) o check e ignorado
+5. Erros de rede, timeout (10s) ou 404 sao silenciosos — app abre normalmente
+
+Distribuicao: backend manda APK para Cloudflare R2 via presigned upload no painel
+admin (waveplay-web). Sem stores oficiais. Antiga implementacao baseada em
+`expo-updates` (OTA do JS bundle) foi removida na Task 10.
 
 ---
 

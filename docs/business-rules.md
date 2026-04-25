@@ -300,3 +300,19 @@ App mostra overlay fullscreen:
 | Theft detection | Family afetada, IP do request suspeito |
 | Token revogado | Motivo (logout, refresh, theft), family |
 | Password reset solicitado | Email, IP |
+
+---
+
+## Atualizacoes de versao
+
+| Regra | Descricao |
+|-------|-----------|
+| Versao instalada | Lida via `Application.nativeApplicationVersion` (vem de `app.json` `expo.version`) |
+| Versao no servidor | `GET /app/version` retorna a versao current marcada pelo admin no painel web |
+| Comparacao | Lib `semver` (`semver.lt(current, latest)`) — suporta prerelease (ex: `1.0.0-beta.1`) |
+| Force update | Quando flag `forceUpdate: true` no server, modal nao pode ser fechado |
+| Plataforma | Apenas Android — iOS nao distribuido fora da App Store |
+| DEV bypass | Em `__DEV__`, check e ignorado para nao atrapalhar desenvolvimento |
+| Fallback offline | Se API offline ou timeout (10s), app abre normalmente sem modal |
+| Erro 404 | Quando nao ha versao publicada (`NoCurrentVersionError`), tratado como erro silencioso |
+| Persistencia do dismiss | Estado `updateDismissed` e local — modal reaparece em cada cold start ate o user atualizar |

@@ -77,10 +77,12 @@
 
 | Tech | Versao | Uso |
 |------|--------|-----|
-| expo-updates | ~55.0.16 | Atualizacoes OTA (over-the-air) |
+| expo-application | ^55.0.14 | Le `nativeApplicationVersion` para checagem de update remota |
+| semver | ^7.7.4 | Comparacao de versoes (suporta prerelease) |
 | expo-status-bar | ~55.0.4 | Controle da barra de status |
 | expo-system-ui | ^55.0.11 | Configuracao de UI do sistema |
-| EAS Build | cloud | Build nativo (Android APK/AAB, iOS IPA) |
+| Linking (react-native) | core | Abrir URL externa (download de APK no browser) |
+| EAS Build | cloud | Build nativo (Android APK/AAB) |
 
 ---
 

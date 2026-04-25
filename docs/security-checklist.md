@@ -333,4 +333,17 @@ Tabela de referencia rapida: quais categorias de vulnerabilidade verificar em ca
 
 ---
 
+## App Update Check (Task 10)
+
+Checagem remota de versao no boot do app, com modal levando para download de APK no R2 via browser.
+
+| Item | Risco | Mitigacao |
+|------|-------|-----------|
+| Validacao do downloadUrl antes de Linking.openURL | App segue cegamente URL retornada pelo server | `handleOpenDownload` valida `url.startsWith('https://')` antes de chamar `Linking.openURL`. Backend e fonte da verdade mas validacao extra protege contra MITM ou bug |
+| MITM no /app/version | Resposta adulterada injeta URL maliciosa | TLS obrigatorio na API (HTTPS only em prod). Combinado com validacao de protocolo no client, ataque exige comprometer TLS + injetar HTTPS valido (cenario muito caro) |
+| App fora de versao em prod | Usuario fica em versao com bugs criticos sem perceber | Admin pode marcar `forceUpdate: true` no painel web; modal bloqueia o app ate o user atualizar (sem botao "Depois"). Combinado com onRequestClose ignorado para back fisico do Android |
+| Force update bloqueia app indefinidamente se backend cair | API offline → modal nunca aparece | `useAppVersionCheck` tem timeout de 10s e `__DEV__` bypass. Se status='error', app abre normalmente — force update so atua quando server respondeu |
+
+---
+
 > **Como usar**: Antes de implementar cada task, consultar a tabela da secao 20 para saber quais categorias priorizar. Para tasks do app mobile, verificar também a secao 19 (Seguranca Mobile). Ao finalizar, verificar cada item da categoria correspondente.
