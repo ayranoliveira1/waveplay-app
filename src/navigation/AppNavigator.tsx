@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Text, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { ActivityIndicator, Linking, Text, View } from 'react-native'
 import { NavigationContainer, DarkTheme } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
-import * as Updates from 'expo-updates'
 import { AuthNavigator } from './AuthNavigator'
 import { MainNavigator } from './MainNavigator'
 import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, SearchScreen, ProfileSelectionScreen, ProfileFormScreen, AccountScreen, PlansScreen } from '../screens'
 import { UpdateModal } from '../components/ui'
-import { useAuth, useProfile } from '../hooks'
+import { useAppVersionCheck, useAuth, useProfile } from '../hooks'
 import type { RootStackParamList } from '../types'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -29,50 +28,24 @@ export function AppNavigator() {
   const insets = useSafeAreaInsets()
   const [showSplash, setShowSplash] = useState(true)
 
-  // OTA update — roda desde o início, em paralelo com tudo
-  const [checkingUpdate, setCheckingUpdate] = useState(true)
-  const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const didCheckUpdate = useRef(false)
-  const { isDownloading, downloadProgress } = Updates.useUpdates()
+  // Checagem remota de versao (Task 10) — substitui OTA antigo.
+  const versionCheck = useAppVersionCheck()
+  const [updateDismissed, setUpdateDismissed] = useState(false)
+  const showUpdateModal =
+    versionCheck.status === 'update-available' &&
+    (versionCheck.forceUpdate || !updateDismissed)
 
-  useEffect(() => {
-    if (didCheckUpdate.current) return
-    didCheckUpdate.current = true
-
-    ;(async () => {
-      try {
-        if (Updates.isEnabled) {
-          const timeout = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 10000),
-          )
-          const check = await Promise.race([
-            Updates.checkForUpdateAsync(),
-            timeout,
-          ])
-          if (check.isAvailable) {
-            setCheckingUpdate(false)
-            setShowUpdateModal(true)
-            return
-          }
-        }
-      } catch {
-        // em dev, sem rede ou timeout, ignora
-      }
-      setCheckingUpdate(false)
-    })()
-  }, [])
-
-  const handleUpdate = useCallback(async () => {
-    try {
-      await Updates.fetchUpdateAsync()
-      await Updates.reloadAsync()
-    } catch {
-      setShowUpdateModal(false)
+  const handleOpenDownload = useCallback(() => {
+    const url = versionCheck.downloadUrl
+    // Defensive: so abre URL https para evitar abrir conteudo malicioso
+    // caso a resposta da API tenha sido adulterada (MITM).
+    if (url && url.startsWith('https://')) {
+      Linking.openURL(url)
     }
-  }, [])
+  }, [versionCheck.downloadUrl])
 
   const handleSkipUpdate = useCallback(() => {
-    setShowUpdateModal(false)
+    setUpdateDismissed(true)
   }, [])
 
   const handleSplashFinish = useCallback(() => {
@@ -97,7 +70,7 @@ export function AppNavigator() {
 
   return (
     <View style={{ flex: 1 }}>
-      {checkingUpdate && (
+      {versionCheck.status === 'checking' && (
         <View
           style={{
             position: 'absolute',
@@ -167,10 +140,11 @@ export function AppNavigator() {
 
       <UpdateModal
         visible={showUpdateModal}
-        downloading={isDownloading}
-        progress={downloadProgress ?? 0}
-        onUpdate={handleUpdate}
-        onSkip={handleSkipUpdate}
+        latestVersion={versionCheck.latestVersion ?? ''}
+        releaseNotes={versionCheck.releaseNotes}
+        forceUpdate={versionCheck.forceUpdate}
+        onUpdate={handleOpenDownload}
+        onDismiss={handleSkipUpdate}
       />
     </View>
   )
