@@ -2,7 +2,7 @@
   "expo": {
     "name": "WavePlay",
     "slug": "streams-app",
-    "version": "1.0.2",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -26,15 +26,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_ERROR_RECOVERY",
-      "fallbackToCacheTimeout": 5000,
-      "url": "https://u.expo.dev/d41b6a11-3890-4db1-bb72-dd5263ff15fb"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
     },
     "extra": {
       "eas": {
