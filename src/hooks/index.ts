@@ -1,3 +1,4 @@
+export { useAppVersionCheck } from './useAppVersionCheck'
 export { useAuth } from './useAuth'
 export { useFavorites } from './useFavorites'
 export { useHistory } from './useHistory'
