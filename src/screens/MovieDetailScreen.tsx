@@ -195,6 +195,8 @@ export function MovieDetailScreen() {
               }
               onPress={handleWatch}
               disabled={!canWatch}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             />
             {hasProgress && (
               <View className="mt-2 h-1 overflow-hidden rounded-full bg-background-tertiary">

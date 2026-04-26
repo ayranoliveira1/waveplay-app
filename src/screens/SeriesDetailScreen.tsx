@@ -219,6 +219,8 @@ export function SeriesDetailScreen() {
                 title="🔒 Assistir"
                 onPress={() => {}}
                 disabled
+                numberOfLines={1}
+                adjustsFontSizeToFit
               />
             ) : canContinue ? (
               <Button
@@ -234,6 +236,8 @@ export function SeriesDetailScreen() {
                     episode: lastEpisode!,
                   })
                 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               />
             ) : (
               <Button
@@ -250,6 +254,8 @@ export function SeriesDetailScreen() {
                     episode: 1,
                   })
                 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               />
             )}
           </View>
