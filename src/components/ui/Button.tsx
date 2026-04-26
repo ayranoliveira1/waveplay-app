@@ -8,6 +8,8 @@ interface ButtonProps {
   isLoading?: boolean
   disabled?: boolean
   icon?: React.ReactNode
+  numberOfLines?: number
+  adjustsFontSizeToFit?: boolean
 }
 
 const variantStyles = {
@@ -31,6 +33,8 @@ export function Button({
   isLoading = false,
   disabled = false,
   icon,
+  numberOfLines,
+  adjustsFontSizeToFit,
 }: ButtonProps) {
   const scale = useRef(new Animated.Value(1)).current
 
@@ -64,6 +68,9 @@ export function Button({
             {icon}
             <Text
               className={`text-base font-semibold ${textStyles[variant]} ${icon ? 'ml-2' : ''}`}
+              numberOfLines={numberOfLines}
+              adjustsFontSizeToFit={adjustsFontSizeToFit}
+              minimumFontScale={0.8}
             >
               {title}
             </Text>
