@@ -94,6 +94,7 @@ streams-tests/
 │   │   ├── PlayerScreen.tsx       # WebView com player (EmbedPlay)
 │   │   ├── ProfileScreen.tsx      # Menu do perfil (conta, favoritos, etc)
 │   │   ├── AccountScreen.tsx      # Dados da conta + subscription
+│   │   ├── ChangePasswordScreen.tsx # Alterar senha do user logado (currentPassword + newPassword)
 │   │   ├── PlansScreen.tsx        # Listagem de planos disponiveis
 │   │   └── index.ts               # Barrel export
 │   │
@@ -105,6 +106,7 @@ streams-tests/
 │   │   ├── playback.ts            # Endpoints de progresso e historico
 │   │   ├── stream.ts              # Endpoints de stream (start/ping/stop)
 │   │   ├── plans.ts               # Endpoint de planos
+│   │   ├── auth.ts                # PATCH /auth/password (change password do user logado)
 │   │   └── embedplay.ts           # Gerador de URL do player
 │   │
 │   └── types/
@@ -141,6 +143,7 @@ AppNavigator (root)
     ├── ProfileSelection
     ├── ProfileForm
     ├── Account
+    ├── ChangePassword   (push a partir de Account → Segurança → "Alterar senha")
     └── Plans
 ```
 

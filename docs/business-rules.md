@@ -111,6 +111,20 @@ Web (padrão, sem header):
 | Salvo como hash | Token salvo como SHA-256 no banco (igual refresh token) |
 | Reset efetivo | POST /auth/reset-password valida token → atualiza senha → revoga TODAS as families |
 
+### Change Password (logado)
+
+| Regra | Descrição |
+|-------|-----------|
+| Acesso | `Profile → Minha Conta → "Alterar senha"` abre `ChangePasswordScreen` |
+| Endpoint | `PATCH /auth/password` (rota protegida via JWT) |
+| Validação client-side | Schema Zod idêntico ao backend: 8+ chars, 1 maiúscula, 1 minúscula, 1 número |
+| `confirmPassword` apenas no frontend | Validação de UX (anti-typo). Backend recebe só `{ currentPassword, newPassword }` |
+| Senha diferente da atual | Validação client-side via `.refine()` impede submit com `newPassword === currentPassword` |
+| Sessão atual preservada | Após sucesso, **não** chama `signOut`. Backend revoga as outras sessões via `revokeAllByUserId` |
+| Outros devices deslogados | Outros aparelhos com refresh token antigo recebem 401 no próximo refresh — `setOnUnauthorized` redireciona pra Login |
+| Feedback | `Alert.alert` no sucesso (com botão OK que chama `navigation.goBack()`). `apiError` inline no erro (mensagem do backend) |
+| Toggle Mostrar/Ocultar | Cada um dos 3 inputs tem state local de visibilidade (igual padrão do `LoginScreen`) |
+
 ---
 
 ## 3. Perfis
