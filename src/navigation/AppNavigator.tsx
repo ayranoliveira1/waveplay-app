@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { AuthNavigator } from './AuthNavigator'
 import { MainNavigator } from './MainNavigator'
-import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, SearchScreen, ProfileSelectionScreen, ProfileFormScreen, AccountScreen, PlansScreen } from '../screens'
+import { SplashScreen, MovieDetailScreen, SeriesDetailScreen, PlayerScreen, SearchScreen, ProfileSelectionScreen, ProfileFormScreen, AccountScreen, ChangePasswordScreen, PlansScreen } from '../screens'
 import { UpdateModal } from '../components/ui'
 import { useAppVersionCheck, useAuth, useProfile } from '../hooks'
 import type { RootStackParamList } from '../types'
@@ -125,6 +125,7 @@ export function AppNavigator() {
               <Stack.Screen name="SeriesDetail" component={SeriesDetailScreen} />
               <Stack.Screen name="Search" component={SearchScreen} />
               <Stack.Screen name="Account" component={AccountScreen} />
+              <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
               <Stack.Screen name="Plans" component={PlansScreen} />
               <Stack.Screen
                 name="Player"

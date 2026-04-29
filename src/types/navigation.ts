@@ -16,6 +16,7 @@ export type RootStackParamList = {
   ProfileSelection: undefined
   ProfileForm: { profileId?: string }
   Account: undefined
+  ChangePassword: undefined
   Plans: undefined
 }
 
