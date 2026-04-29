@@ -176,6 +176,29 @@ export function AccountScreen() {
           <Ionicons name="chevron-forward" size={16} color="#5A5A72" />
         </Pressable>
       </View>
+
+      <View className="mt-6 gap-2 px-4">
+        <Text className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+          Segurança
+        </Text>
+        <Pressable
+          onPress={() => navigation.navigate('ChangePassword')}
+          className="flex-row items-center justify-between rounded-card bg-background-secondary px-4 py-3"
+        >
+          <View className="flex-row items-center">
+            <Ionicons
+              name="lock-closed-outline"
+              size={18}
+              color="#A0A0B8"
+              style={{ marginRight: 12 }}
+            />
+            <Text className="text-sm font-medium text-white">
+              Alterar senha
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="#5A5A72" />
+        </Pressable>
+      </View>
     </ScrollView>
   )
 }
