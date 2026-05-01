@@ -11,8 +11,10 @@ import {
   getPopularSeries,
   getNowPlayingMovies,
   getTopRatedMovies,
+  getByWatchProviders,
 } from '../services/catalog'
 import { useHistory } from '../hooks'
+import { WATCH_PROVIDERS } from '../constants/watch-providers'
 import type { RootStackParamList, CatalogItem, HistoryItem } from '../types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
@@ -80,6 +82,33 @@ export function HomeScreen() {
     queryFn: () => getTopRatedMovies(),
   })
 
+  const { data: netflixCatalog, refetch: refetchNetflix } = useQuery({
+    queryKey: ['catalog', 'watch-provider', 'netflix'],
+    queryFn: () => getByWatchProviders(8),
+  })
+
+  const { data: disneyCatalog, refetch: refetchDisney } = useQuery({
+    queryKey: ['catalog', 'watch-provider', 'disney-plus'],
+    queryFn: () => getByWatchProviders(337),
+  })
+
+  const { data: maxCatalog, refetch: refetchMax } = useQuery({
+    queryKey: ['catalog', 'watch-provider', 'max'],
+    queryFn: () => getByWatchProviders(1899),
+  })
+
+  const { data: primeCatalog, refetch: refetchPrime } = useQuery({
+    queryKey: ['catalog', 'watch-provider', 'prime-video'],
+    queryFn: () => getByWatchProviders(119),
+  })
+
+  const watchProviderData = {
+    netflix: netflixCatalog,
+    'disney-plus': disneyCatalog,
+    max: maxCatalog,
+    'prime-video': primeCatalog,
+  } as const
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     await Promise.all([
@@ -88,11 +117,26 @@ export function HomeScreen() {
       refetchSeries(),
       refetchNowPlaying(),
       refetchTopRated(),
+      refetchNetflix(),
+      refetchDisney(),
+      refetchMax(),
+      refetchPrime(),
       reloadHistory(),
     ])
     setRefreshKey((k) => k + 1)
     setRefreshing(false)
-  }, [refetchTrending, refetchPopular, refetchSeries, refetchNowPlaying, refetchTopRated, reloadHistory])
+  }, [
+    refetchTrending,
+    refetchPopular,
+    refetchSeries,
+    refetchNowPlaying,
+    refetchTopRated,
+    refetchNetflix,
+    refetchDisney,
+    refetchMax,
+    refetchPrime,
+    reloadHistory,
+  ])
 
   function handleMediaPress(id: number, type: 'movie' | 'series') {
     if (type === 'movie') {
@@ -263,6 +307,37 @@ export function HomeScreen() {
           />
         </AnimatedSection>
       )}
+
+      {WATCH_PROVIDERS.map((provider, idx) => {
+        const data =
+          watchProviderData[provider.slug as keyof typeof watchProviderData]
+        if (!data || data.results.length === 0) return null
+        const delay = 700 + idx * 100
+        return (
+          <AnimatedSection
+            key={`${provider.slug}-${refreshKey}`}
+            delay={delay}
+          >
+            <Carousel
+              title={provider.title}
+              data={data.results}
+              keyExtractor={(item: CatalogItem) =>
+                `${provider.slug}-${item.type}-${item.id}`
+              }
+              renderItem={(item: CatalogItem) => (
+                <MediaCard
+                  id={item.id}
+                  title={item.title}
+                  posterPath={item.posterPath}
+                  rating={item.rating}
+                  type={item.type}
+                  onPress={handleMediaPress}
+                />
+              )}
+            />
+          </AnimatedSection>
+        )
+      })}
 
       <View className="h-8" />
     </ScrollView>
