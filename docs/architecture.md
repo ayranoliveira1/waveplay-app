@@ -31,7 +31,7 @@ streams-tests/
 │   │   ├── Carousel.tsx           # Lista horizontal genérica
 │   │   ├── ContinueWatchingCard.tsx # Card de "Continue Assistindo"
 │   │   ├── EpisodeCard.tsx        # Card de episodio com progresso
-│   │   ├── GenreChips.tsx         # Chips de genero
+│   │   ├── GenrePicker.tsx        # Dropdown de genero (Modal + FlatList)
 │   │   ├── HeroBanner.tsx         # Banner principal da Home
 │   │   ├── MediaCard.tsx          # Card de filme/serie (poster)
 │   │   ├── RatingBadge.tsx        # Badge de avaliacao
