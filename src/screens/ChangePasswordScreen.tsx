@@ -8,15 +8,13 @@ import {
   Alert,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
-import type { NavigationProp } from '@react-navigation/native'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { BackButton } from '../components'
 import { Button, Input } from '../components/ui'
 import { auth } from '../services/auth'
-import type { RootStackParamList } from '../types'
+import { useAuth } from '../hooks/useAuth'
 
 const changePasswordSchema = z
   .object({
@@ -42,7 +40,7 @@ type ChangePasswordForm = z.infer<typeof changePasswordSchema>
 
 export function ChangePasswordScreen() {
   const insets = useSafeAreaInsets()
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+  const { signOut } = useAuth()
 
   const [isLoading, setIsLoading] = useState(false)
   const [showCurrent, setShowCurrent] = useState(false)
@@ -75,9 +73,11 @@ export function ChangePasswordScreen() {
     setIsLoading(false)
 
     if (response.success) {
-      Alert.alert('Sucesso', 'Senha alterada com sucesso', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ])
+      Alert.alert(
+        'Senha alterada',
+        'Você será desconectado e precisará entrar novamente com a nova senha.',
+        [{ text: 'OK', onPress: () => signOut() }],
+      )
     } else {
       setApiError(
         (response.error?.[0]?.message ?? 'Erro ao alterar senha').slice(0, 200),
@@ -104,8 +104,8 @@ export function ChangePasswordScreen() {
           Alterar senha
         </Text>
         <Text className="mb-6 text-sm text-text-secondary">
-          Após alterar, todos os outros dispositivos serão deslogados. Esta
-          sessão permanece ativa.
+          Após alterar a senha, você será desconectado e precisará entrar
+          novamente. Outros dispositivos também serão desconectados.
         </Text>
 
         <Controller
