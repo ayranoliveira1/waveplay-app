@@ -10,7 +10,7 @@ import { Image } from 'expo-image'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { GenreChips, RatingBadge, ScreenHeader } from '../components'
+import { GenrePicker, RatingBadge, ScreenHeader } from '../components'
 import { ErrorState } from '../components/ui'
 import {
   getMovieGenres,
@@ -100,7 +100,7 @@ export function MoviesScreen() {
       <ScreenHeader title="Filmes" />
 
       {genres && (
-        <GenreChips
+        <GenrePicker
           genres={genres.genres}
           selectedGenreId={selectedGenreId}
           onSelect={setSelectedGenreId}
