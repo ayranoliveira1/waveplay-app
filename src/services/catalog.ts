@@ -110,3 +110,10 @@ export function getSeriesGenres() {
     '/catalog/genres/series',
   )
 }
+
+// Watch providers
+export function getByWatchProviders(providerId: number, page = 1) {
+  return catalogGet<CatalogList>(
+    `/catalog/by-watch-providers?providers=${providerId}&page=${page}`,
+  )
+}
