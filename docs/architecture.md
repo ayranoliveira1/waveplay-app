@@ -55,7 +55,8 @@ streams-tests/
 │   │
 │   ├── constants/
 │   │   ├── api.ts                 # URLs base (API, TMDB images, EmbedPlay)
-│   │   └── theme.ts               # Cores de perfil, helpers visuais
+│   │   ├── theme.ts               # Cores de perfil, helpers visuais
+│   │   └── watch-providers.ts     # IDs TMDB BR dos streamings (Netflix, Disney+, Max, Prime)
 │   │
 │   ├── contexts/
 │   │   ├── AuthContext.tsx         # Autenticacao (user, signIn, signOut)
